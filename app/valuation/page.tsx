@@ -5,16 +5,19 @@ import Nav from "@/components/Nav";
 import PropertyForm from "@/components/PropertyForm";
 import ComparableResultCard from "@/components/ComparableResultCard";
 import ResultSummary from "@/components/ResultSummary";
+import AskAiPanel from "@/components/AskAiPanel";
+import ValuationReport from "@/components/ValuationReport";
 import { blankSubject, blankComparable } from "@/lib/blank-property";
 import { PropertyInput, ValuationResult } from "@/lib/types";
 import { calculateValuation } from "@/lib/valuation-engine";
 import { getRuleSetForCity } from "@/lib/rules-data";
-import { Plus, Calculator } from "lucide-react";
+import { Plus, Calculator, FileText } from "lucide-react";
 
 export default function ValuationPage() {
   const [subject, setSubject] = useState<PropertyInput>(blankSubject());
   const [comparables, setComparables] = useState<PropertyInput[]>([blankComparable(1), blankComparable(2)]);
   const [result, setResult] = useState<ValuationResult | null>(null);
+  const [showReport, setShowReport] = useState(false);
 
   function addComparable() {
     setComparables((c) => [...c, blankComparable(c.length + 1)]);
@@ -82,6 +85,13 @@ export default function ValuationPage() {
             {result ? (
               <>
                 <ResultSummary result={result} />
+                <button
+                  onClick={() => setShowReport(true)}
+                  className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-full border border-line dark:border-line-dark font-semibold text-sm hover:border-gold hover:text-gold transition-colors"
+                >
+                  <FileText size={15} /> Download Full Report
+                </button>
+                <AskAiPanel results={result.comparables} />
                 <div className="space-y-4">
                   <h2 className="font-display font-semibold">Comparable-by-comparable breakdown</h2>
                   {result.comparables.map((r, i) => (
@@ -98,6 +108,8 @@ export default function ValuationPage() {
           </div>
         </div>
       </div>
+
+      {result && showReport && <ValuationReport result={result} onClose={() => setShowReport(false)} />}
     </main>
   );
 }

@@ -47,9 +47,22 @@ export interface DerivedMetrics {
 export interface AdjustmentLine {
   key: string;
   label: string;
+  ruleName: string; // e.g. "Facing Preference — Mumbai"
   percent: number; // signed: + means comparable is superior, - means subject is superior
   reason: string;
-  ruleSource: string; // which city rule set produced this
+  calculation: string; // e.g. "Comparable rank 5 − Subject rank 4 = +1 step × 1.0%/step"
+  city: string;
+  version: number;
+  effectiveDate: string;
+  configuredBy: string;
+  ruleSource: string; // legacy display string: "<city> v<version>"
+}
+
+export interface ComparableQualityScore {
+  percent: number; // 0-100
+  stars: number; // 0-5
+  label: string; // "Excellent Comparable" | "Good Comparable" | ...
+  reasons: { label: string; met: boolean }[];
 }
 
 export interface ComparableResult {
@@ -58,6 +71,7 @@ export interface ComparableResult {
   adjustments: AdjustmentLine[];
   totalAdjustmentPercent: number;
   adjustedPsf: number;
+  quality: ComparableQualityScore;
 }
 
 export interface ValuationResult {
@@ -103,6 +117,7 @@ export interface CityRuleSet {
   effectiveDate: string;
   version: number;
   notes: string;
+  configuredBy: string;
   loadFactor: NumericRule;
   age: NumericRule;
   unitType: CategoricalRule;

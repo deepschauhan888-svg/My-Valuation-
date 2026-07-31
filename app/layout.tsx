@@ -19,7 +19,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ledger | Transparent Property Valuation",
+  title: "ValueTrace | Transparent Property Valuation",
   description:
     "Know your property's real value and see every calculation behind it. Comparable-based, fully auditable property valuation for Indian residential real estate.",
 };

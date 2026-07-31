@@ -73,6 +73,7 @@ function baseRuleSet(city: string): CityRuleSet {
     effectiveDate: "2026-04-01",
     version: 1,
     notes: "Seed defaults — tune from Admin > Adjustment Engine.",
+    configuredBy: "System (seed)",
     loadFactor: { percentPerUnit: 0.4, capPercent: 5, enabled: true },
     age: { percentPerUnit: 0.6, capPercent: 8, enabled: true },
     unitType: defaultUnitTypeRank,
@@ -98,3 +99,21 @@ export const CITY_RULE_SETS: Record<string, CityRuleSet> = {
 export function getRuleSetForCity(city: string): CityRuleSet {
   return CITY_RULE_SETS[city] ?? baseRuleSet(city);
 }
+
+export interface RuleVersionEntry {
+  version: number;
+  effectiveDate: string;
+  note: string;
+  configuredBy: string;
+}
+
+// Seed history so the admin panel has something real to render before Supabase is wired in.
+export const RULE_VERSION_HISTORY: Record<string, RuleVersionEntry[]> = Object.fromEntries(
+  Object.keys(CITY_RULE_SETS).map((city) => [
+    city,
+    [
+      { version: 1, effectiveDate: "2026-04-01", note: "Initial rule set", configuredBy: "System (seed)" },
+    ],
+  ])
+);
+

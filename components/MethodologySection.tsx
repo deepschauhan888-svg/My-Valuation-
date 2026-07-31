@@ -1,28 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ShieldCheck } from "lucide-react";
+import FactorDetailModal from "./FactorDetailModal";
+import { FACTOR_DETAILS } from "@/lib/factor-details";
 
 const FLOW = ["Comparable Price", "Premium / Discount", "Adjusted PSF", "Average Adjusted PSF", "Final Market Value"];
 
-const FACTORS = [
-  "Super Built-up Area",
-  "Carpet Area",
-  "Load Factor",
-  "Age of Property",
-  "Unit Type",
-  "Construction Status",
-  "Property Condition",
-  "Furnishing",
-  "Floor Number",
-  "Facing",
-  "Parking",
-  "Balcony",
-  "Legal Issues",
-  "Unique Features",
+const FACTORS = Object.keys(FACTOR_DETAILS);
+
+const PRINCIPLES = [
+  "We use the Comparable Sales Method — your property, measured against real comparables.",
+  "We do not hide calculations. Every adjustment is visible and clickable.",
+  "Area is never adjusted directly — Super Built-up and Carpet Area only feed PSF and Load Factor.",
+  "Every premium and discount follows configurable, city-specific rules — not a fixed national formula.",
+  "Every valuation is completely explainable, end to end.",
 ];
 
 export default function MethodologySection() {
+  const [openFactor, setOpenFactor] = useState<string | null>(null);
+
   return (
     <section id="methodology" className="max-w-6xl mx-auto px-6 py-24">
       <div className="grid lg:grid-cols-2 gap-16">
@@ -35,15 +33,17 @@ export default function MethodologySection() {
             We compare your property against the ones you bring us across 14 factors. Area and carpet
             area are never adjusted directly — they only feed the PSF and load-factor math. Everything
             else — condition, floor, facing, parking, and more — earns a visible premium or discount.
+            <span className="block mt-2 text-sm">Tap any factor below to see exactly how it works.</span>
           </p>
           <div className="flex flex-wrap gap-2">
             {FACTORS.map((f) => (
-              <span
+              <button
                 key={f}
-                className="text-xs font-medium px-3 py-1.5 rounded-full border border-line dark:border-line-dark text-navy-400"
+                onClick={() => setOpenFactor(f)}
+                className="text-xs font-medium px-3 py-1.5 rounded-full border border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold transition-colors"
               >
                 {f}
-              </span>
+              </button>
             ))}
           </div>
         </div>
@@ -67,6 +67,29 @@ export default function MethodologySection() {
           ))}
         </div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4 }}
+        className="mt-16 card-surface p-8"
+      >
+        <div className="flex items-center gap-2 mb-5">
+          <ShieldCheck size={18} className="text-gold" />
+          <h3 className="font-display font-semibold text-lg">Our valuation principles</h3>
+        </div>
+        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3">
+          {PRINCIPLES.map((p) => (
+            <li key={p} className="text-sm text-navy-400 leading-relaxed flex gap-2">
+              <span className="text-gold shrink-0">—</span>
+              {p}
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+
+      <FactorDetailModal detail={openFactor ? FACTOR_DETAILS[openFactor] : null} onClose={() => setOpenFactor(null)} />
     </section>
   );
 }

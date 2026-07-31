@@ -7,6 +7,7 @@ import {
   PropertyInput,
   ValuationResult,
 } from "./types";
+import { scoreComparable } from "./quality-score";
 
 // ---------------------------------------------------------------------------
 // Adjustment philosophy (do not change without updating the methodology copy
@@ -58,12 +59,26 @@ function categoricalAdjustment(
 function buildLine(
   key: string,
   label: string,
+  ruleName: string,
   percent: number,
   reason: string,
-  ruleSource: string
+  calculation: string,
+  rules: CityRuleSet
 ): AdjustmentLine | null {
   if (Math.abs(percent) < 0.001) return null;
-  return { key, label, percent: Math.round(percent * 100) / 100, reason, ruleSource };
+  return {
+    key,
+    label,
+    ruleName,
+    percent: Math.round(percent * 100) / 100,
+    reason,
+    calculation,
+    city: rules.city,
+    version: rules.version,
+    effectiveDate: rules.effectiveDate,
+    configuredBy: rules.configuredBy,
+    ruleSource: `${rules.city} v${rules.version}`,
+  };
 }
 
 function describeDirection(percent: number, subjectPhrase: string, comparablePhrase: string): string {
@@ -88,12 +103,14 @@ export function calculateComparable(
   const lfLine = buildLine(
     "loadFactor",
     "Load Factor",
+    `Load Factor Efficiency — ${rules.city}`,
     lfPercent,
     lfPercent !== 0
       ? `Subject load factor ${subjectLoadFactor.toFixed(1)}% vs comparable ${comparableLoadFactor.toFixed(1)}%. ` +
         describeDirection(lfPercent, "has a leaner load factor", "carries more efficient carpet area")
       : "",
-    `${rules.city} v${rules.version}`
+    `(${comparableLoadFactor.toFixed(1)}% − ${subjectLoadFactor.toFixed(1)}%) × ${rules.loadFactor.percentPerUnit}%/pt × −1 = ${lfPercent.toFixed(2)}%`,
+    rules
   );
   if (lfLine) lines.push(lfLine);
 
@@ -102,12 +119,14 @@ export function calculateComparable(
   const ageLine = buildLine(
     "age",
     "Age of Property",
+    `Age Depreciation — ${rules.city}`,
     agePercent,
     agePercent !== 0
       ? `Subject is ${subject.ageYears} yrs, comparable is ${comparable.ageYears} yrs. ` +
         describeDirection(agePercent, "is newer", "is newer")
       : "",
-    `${rules.city} v${rules.version}`
+    `(${comparable.ageYears} − ${subject.ageYears}) yrs × ${rules.age.percentPerUnit}%/yr × −1 = ${agePercent.toFixed(2)}%`,
+    rules
   );
   if (ageLine) lines.push(ageLine);
 
@@ -116,12 +135,14 @@ export function calculateComparable(
   const unitLine = buildLine(
     "unitType",
     "Unit Type",
+    `Configuration Premium — ${rules.city}`,
     unitPercent,
     unitPercent !== 0
       ? `Subject is ${subject.unitType.toUpperCase()}, comparable is ${comparable.unitType.toUpperCase()}. ` +
         describeDirection(unitPercent, "is the larger configuration", "is the larger configuration")
       : "",
-    `${rules.city} v${rules.version}`
+    `rank step difference × ${rules.unitType.percentPerRankStep}%/step = ${unitPercent.toFixed(2)}%`,
+    rules
   );
   if (unitLine) lines.push(unitLine);
 
@@ -134,12 +155,14 @@ export function calculateComparable(
   const csLine = buildLine(
     "constructionStatus",
     "Construction Status",
+    `Construction Readiness — ${rules.city}`,
     csPercent,
     csPercent !== 0
       ? `Subject is "${subject.constructionStatus}", comparable is "${comparable.constructionStatus}". ` +
         describeDirection(csPercent, "is further along / more ready", "is further along / more ready")
       : "",
-    `${rules.city} v${rules.version}`
+    `rank step difference × ${rules.constructionStatus.percentPerRankStep}%/step = ${csPercent.toFixed(2)}%`,
+    rules
   );
   if (csLine) lines.push(csLine);
 
@@ -148,12 +171,14 @@ export function calculateComparable(
   const condLine = buildLine(
     "condition",
     "Property Condition",
+    `Condition Grade — ${rules.city}`,
     condPercent,
     condPercent !== 0
       ? `Subject condition "${subject.condition}" vs comparable "${comparable.condition}". ` +
         describeDirection(condPercent, "is in better condition", "is in better condition")
       : "",
-    `${rules.city} v${rules.version}`
+    `rank step difference × ${rules.condition.percentPerRankStep}%/step = ${condPercent.toFixed(2)}%`,
+    rules
   );
   if (condLine) lines.push(condLine);
 
@@ -162,12 +187,14 @@ export function calculateComparable(
   const furnLine = buildLine(
     "furnishing",
     "Furnishing",
+    `Furnishing Level — ${rules.city}`,
     furnPercent,
     furnPercent !== 0
       ? `Subject is "${subject.furnishing}", comparable is "${comparable.furnishing}". ` +
         describeDirection(furnPercent, "is more furnished", "is more furnished")
       : "",
-    `${rules.city} v${rules.version}`
+    `rank step difference × ${rules.furnishing.percentPerRankStep}%/step = ${furnPercent.toFixed(2)}%`,
+    rules
   );
   if (furnLine) lines.push(furnLine);
 
@@ -183,12 +210,14 @@ export function calculateComparable(
   const floorLine = buildLine(
     "floor",
     "Floor Number",
+    `Relative Floor Premium — ${rules.city}`,
     floorPercent,
     floorPercent !== 0
       ? `Subject: floor ${subject.floorNumber}/${subject.totalFloors}. Comparable: floor ${comparable.floorNumber}/${comparable.totalFloors}. ` +
         describeDirection(floorPercent, "sits on the higher relative floor", "sits on the higher relative floor")
       : "",
-    `${rules.city} v${rules.version}`
+    `(${(comparableFloorRatio * 100).toFixed(0)} − ${(subjectFloorRatio * 100).toFixed(0)}) pts × ${rules.floor.percentPerUnit}%/pt = ${floorPercent.toFixed(2)}%`,
+    rules
   );
   if (floorLine) lines.push(floorLine);
 
@@ -197,12 +226,14 @@ export function calculateComparable(
   const facingLine = buildLine(
     "facing",
     "Facing",
+    `Facing Preference — ${rules.city}`,
     facingPercent,
     facingPercent !== 0
       ? `Subject faces ${subject.facing}, comparable faces ${comparable.facing}. ` +
         describeDirection(facingPercent, "has the more preferred orientation", "has the more preferred orientation")
       : "",
-    `${rules.city} v${rules.version}`
+    `rank step difference × ${rules.facing.percentPerRankStep}%/step = ${facingPercent.toFixed(2)}%`,
+    rules
   );
   if (facingLine) lines.push(facingLine);
 
@@ -213,12 +244,14 @@ export function calculateComparable(
     const parkingLine = buildLine(
       "parking",
       "Parking",
+      `Covered Parking — ${rules.city}`,
       parkingPercent,
       parkingPercent !== 0
         ? `Subject has ${subject.coveredParkingCount} covered slot(s), comparable has ${comparable.coveredParkingCount}. ` +
           describeDirection(parkingPercent, "has more covered parking", "has more covered parking")
         : "",
-      `${rules.city} v${rules.version}`
+      `−(${comparable.coveredParkingCount} − ${subject.coveredParkingCount}) slots × ${rules.parkingPerSlot.percent}%/slot = ${parkingPercent.toFixed(2)}%`,
+      rules
     );
     if (parkingLine) lines.push(parkingLine);
   }
@@ -230,12 +263,14 @@ export function calculateComparable(
     const balconyLine = buildLine(
       "balcony",
       "Balcony",
+      `Balcony Count — ${rules.city}`,
       balconyPercent,
       balconyPercent !== 0
         ? `Subject has ${subject.balconyCount} balcon(y/ies), comparable has ${comparable.balconyCount}. ` +
           describeDirection(balconyPercent, "has more balconies", "has more balconies")
         : "",
-      `${rules.city} v${rules.version}`
+      `−(${comparable.balconyCount} − ${subject.balconyCount}) × ${rules.balconyPerUnit.percent}%/balcony = ${balconyPercent.toFixed(2)}%`,
+      rules
     );
     if (balconyLine) lines.push(balconyLine);
   }
@@ -248,11 +283,13 @@ export function calculateComparable(
     const legalLine = buildLine(
       "legalIssues",
       "Legal Issues",
+      `Legal / Title Flag — ${rules.city}`,
       percent,
       comparable.hasLegalIssues
         ? "Comparable carries a flagged legal/title issue — marked down."
         : "Subject carries a flagged legal/title issue — comparable is marked down to match on a like-for-like basis.",
-      `${rules.city} v${rules.version}`
+      `Flat penalty of ${rules.legalIssuesPenalty.percent}% applied to the side with the flagged issue.`,
+      rules
     );
     if (legalLine) lines.push(legalLine);
   }
@@ -266,9 +303,11 @@ export function calculateComparable(
       const line = buildLine(
         `feature-${f.id}`,
         `Unique Feature: ${f.label}`,
+        `Unique Feature Premium — ${rules.city}`,
         f.impactPercent,
         `Comparable has "${f.label}" which subject does not — marked up to reflect it.`,
-        `${rules.city} v${rules.version}`
+        `Configured feature impact: ${f.impactPercent > 0 ? "+" : ""}${f.impactPercent}%`,
+        rules
       );
       if (line) lines.push(line);
     }
@@ -278,9 +317,11 @@ export function calculateComparable(
       const line = buildLine(
         `feature-subj-${f.id}`,
         `Unique Feature: ${f.label} (subject only)`,
+        `Unique Feature Premium — ${rules.city}`,
         -f.impactPercent,
         `Subject has "${f.label}" which comparable does not — comparable marked down to match.`,
-        `${rules.city} v${rules.version}`
+        `Configured feature impact: −${f.impactPercent}%`,
+        rules
       );
       if (line) lines.push(line);
     }
@@ -295,7 +336,19 @@ export function calculateComparable(
     adjustments: lines,
     totalAdjustmentPercent: Math.round(totalAdjustmentPercent * 100) / 100,
     adjustedPsf: Math.round(adjustedPsf),
+    quality: scoreComparable(subject, comparable),
   };
+}
+
+export function categoricalMatrix(rule: CategoricalRule): { subject: string; comparable: string; percent: number }[] {
+  const cells: { subject: string; comparable: string; percent: number }[] = [];
+  for (const s of rule.entries) {
+    for (const c of rule.entries) {
+      const percent = rule.enabled ? clamp((c.rank - s.rank) * rule.percentPerRankStep, rule.capPercent) : 0;
+      cells.push({ subject: s.value, comparable: c.value, percent: Math.round(percent * 100) / 100 });
+    }
+  }
+  return cells;
 }
 
 export function calculateValuation(

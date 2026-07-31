@@ -3,12 +3,21 @@
 import { motion } from "framer-motion";
 import { X, Check } from "lucide-react";
 
-const TRADITIONAL = ["Only a final price", "No explanation", "Hidden logic", "One black-box number"];
-const LEDGER = [
-  "Every adjustment visible",
-  "Every premium and discount explained",
-  "Comparable-by-comparable calculation",
-  "Complete, auditable transparency",
+const TRADITIONAL = [
+  "Shows only the final value",
+  "Hidden adjustments",
+  "Black-box estimate",
+  "No stated methodology",
+  "No transparency",
+];
+const VALUETRACE = [
+  "Shows every adjustment",
+  "Shows every premium",
+  "Shows every discount",
+  "Shows calculation step-by-step",
+  "Shows the reason behind each adjustment",
+  "Comparable-by-comparable valuation",
+  "Fully auditable",
 ];
 
 export default function ComparisonSection() {
@@ -45,9 +54,9 @@ export default function ComparisonSection() {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="rounded-2xl p-8 border border-gold/40 bg-gradient-to-b from-gold/[0.06] to-transparent"
         >
-          <div className="eyebrow mb-6 text-gold">Ledger</div>
+          <div className="eyebrow mb-6 text-gold">ValueTrace</div>
           <ul className="space-y-4">
-            {LEDGER.map((item) => (
+            {VALUETRACE.map((item) => (
               <li key={item} className="flex items-start gap-3 text-sm font-medium">
                 <Check size={16} className="text-premium mt-0.5 shrink-0" />
                 {item}
