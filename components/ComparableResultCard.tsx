@@ -50,8 +50,8 @@ export default function ComparableResultCard({ result, index }: { result: Compar
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
-      className="card-surface overflow-hidden"
+      transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.06 }}
+      className="card-surface card-lift overflow-hidden"
     >
       <div className="w-full flex items-center justify-between p-6 text-left">
         <button onClick={() => setExpanded((e) => !e)} className="flex-1 text-left">

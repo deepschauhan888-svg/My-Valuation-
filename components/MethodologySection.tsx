@@ -55,7 +55,7 @@ export default function MethodologySection() {
                 initial={{ opacity: 0, scale: 0.96 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: i * 0.06 }}
+                transition={{ duration: 0.5, ease: "easeOut", delay: i * 0.06 }}
                 className={`w-full max-w-sm card-surface px-6 py-4 text-center font-display font-semibold ${
                   i === FLOW.length - 1 ? "border-gold text-gold" : ""
                 }`}
@@ -72,7 +72,7 @@ export default function MethodologySection() {
         initial={{ opacity: 0, y: 12 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
         className="mt-16 card-surface p-8"
       >
         <div className="flex items-center gap-2 mb-5">

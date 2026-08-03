@@ -12,16 +12,16 @@ export default function Nav() {
           ValueTrace
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-navy-400">
-          <a href="/#how-it-works" className="hover:text-ink dark:hover:text-paper transition-colors">
+          <a href="/#how-it-works" className="link-underline hover:text-ink dark:hover:text-paper transition-colors">
             How it works
           </a>
-          <a href="/#methodology" className="hover:text-ink dark:hover:text-paper transition-colors">
+          <a href="/#methodology" className="link-underline hover:text-ink dark:hover:text-paper transition-colors">
             Methodology
           </a>
-          <a href="/#why-different" className="hover:text-ink dark:hover:text-paper transition-colors">
+          <a href="/#why-different" className="link-underline hover:text-ink dark:hover:text-paper transition-colors">
             Why we&apos;re different
           </a>
-          <Link href="/playground" className="hover:text-ink dark:hover:text-paper transition-colors">
+          <Link href="/playground" className="link-underline hover:text-ink dark:hover:text-paper transition-colors">
             Playground
           </Link>
         </nav>
@@ -29,7 +29,7 @@ export default function Nav() {
           <ThemeToggle />
           <Link
             href="/valuation"
-            className="hidden sm:inline-flex items-center h-9 px-4 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink text-sm font-semibold hover:opacity-90 transition-opacity"
+            className="hidden sm:inline-flex items-center h-9 px-4 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink text-sm font-semibold transition-all hover:opacity-90 hover:-translate-y-px"
           >
             Start Valuation
           </Link>

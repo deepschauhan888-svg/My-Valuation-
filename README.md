@@ -63,6 +63,19 @@ discount is shown with its reason, its math, and the rule that produced it.
 - Dark/light mode with no flash-of-wrong-theme (a tiny inline script sets
   the class before paint), fully responsive, keyboard-focusable controls,
   and `prefers-reduced-motion` respected.
+- **Craft pass** — the hero's live valuation now unfolds slowly (one
+  factor every ~1.9s, with a blur-to-clear reveal) and fades slightly on
+  scroll for a subtle parallax exit; section headings fade in on view;
+  cards lift softly on hover instead of using shadows/gradients for
+  emphasis; nav and footer links use a quiet underline-on-hover instead
+  of a color swap; a minimal loading screen (logo + one line) shows once
+  per session; and a subtle custom cursor (a small dot with a lagging
+  ring that expands over interactive elements) runs on desktop pointers
+  only — it's absent entirely on touch devices and when the OS requests
+  reduced motion. The "See every calculation" phrase in the hero lost its
+  gradient text treatment in favor of a quiet gold underline, in line
+  with keeping color used functionally (premium/discount/final value)
+  rather than decoratively.
 
 ## Design system
 

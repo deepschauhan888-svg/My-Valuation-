@@ -23,19 +23,25 @@ const VALUETRACE = [
 export default function ComparisonSection() {
   return (
     <section id="why-different" className="max-w-6xl mx-auto px-6 py-24">
-      <div className="max-w-xl mb-14">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="max-w-xl mb-14"
+      >
         <div className="eyebrow mb-3">Why we&apos;re different</div>
         <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight">
           Most valuation tools stop at the number.
         </h2>
-      </div>
+      </motion.div>
       <div className="grid md:grid-cols-2 gap-6">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4 }}
-          className="card-surface p-8"
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="card-surface card-lift p-8"
         >
           <div className="eyebrow mb-6 text-navy-400">Traditional valuation</div>
           <ul className="space-y-4">
@@ -51,8 +57,8 @@ export default function ComparisonSection() {
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="rounded-2xl p-8 border border-gold/40 bg-gradient-to-b from-gold/[0.06] to-transparent"
+          transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+          className="card-lift rounded-2xl p-8 border border-gold/40 bg-surface dark:bg-surface-dark"
         >
           <div className="eyebrow mb-6 text-gold">ValueTrace</div>
           <ul className="space-y-4">

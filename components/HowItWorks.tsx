@@ -15,12 +15,18 @@ const STEPS = [
 export default function HowItWorks() {
   return (
     <section id="how-it-works" className="max-w-6xl mx-auto px-6 py-24">
-      <div className="max-w-xl mb-14">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="max-w-xl mb-14"
+      >
         <div className="eyebrow mb-3">How it works</div>
         <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight">
           Six steps. Every one of them visible.
         </h2>
-      </div>
+      </motion.div>
       <div className="grid md:grid-cols-3 gap-px bg-line dark:bg-line-dark rounded-2xl overflow-hidden border border-line dark:border-line-dark">
         {STEPS.map((step, i) => (
           <motion.div
@@ -28,8 +34,8 @@ export default function HowItWorks() {
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.4, delay: (i % 3) * 0.08 }}
-            className="bg-surface dark:bg-surface-dark p-7"
+            transition={{ duration: 0.6, ease: "easeOut", delay: (i % 3) * 0.08 }}
+            className="bg-surface dark:bg-surface-dark p-7 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_20px_45px_-28px_rgba(0,0,0,0.18)]"
           >
             <div className="flex items-center justify-between mb-6">
               <span className="ledger-figure text-xs text-navy-400">{String(i + 1).padStart(2, "0")}</span>

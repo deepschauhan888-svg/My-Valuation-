@@ -75,7 +75,7 @@ export default function LiveDemoPreview() {
       <div className="text-center mt-10">
         <Link
           href="/valuation"
-          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink font-semibold hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink font-semibold transition-all hover:opacity-90 hover:-translate-y-px"
         >
           Start Your Valuation <ArrowRight size={16} />
         </Link>

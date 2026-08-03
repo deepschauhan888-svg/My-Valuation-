@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Sora, Inter, JetBrains_Mono } from "next/font/google";
+import AppChrome from "@/components/AppChrome";
 import "./globals.css";
 
 const display = Sora({
@@ -43,7 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${display.variable} ${body.variable} ${mono.variable} font-body bg-paper text-ink dark:bg-ink dark:text-paper transition-colors duration-300`}
       >
-        {children}
+        <AppChrome>{children}</AppChrome>
       </body>
     </html>
   );

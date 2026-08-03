@@ -20,12 +20,33 @@
   }
 
   .card-surface {
-    @apply bg-surface dark:bg-surface-dark border border-line dark:border-line-dark rounded-2xl;
+    @apply bg-surface dark:bg-surface-dark border border-line dark:border-line-dark rounded-2xl transition-all duration-300;
+  }
+
+  .card-lift {
+    @apply hover:-translate-y-0.5 hover:shadow-[0_20px_45px_-28px_rgba(0,0,0,0.22)];
   }
 
   .eyebrow {
     @apply font-mono text-xs uppercase tracking-[0.18em] text-navy-400;
   }
+
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    transition: background-size 0.3s ease;
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+}
+
+.custom-cursor-active a,
+.custom-cursor-active button,
+.custom-cursor-active [role="button"] {
+  cursor: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

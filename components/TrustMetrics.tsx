@@ -46,7 +46,7 @@ export default function TrustMetrics() {
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: i * 0.06 }}
+            transition={{ duration: 0.6, ease: "easeOut", delay: i * 0.06 }}
             className="text-center"
           >
             <Counter value={m.value} suffix={m.suffix} />

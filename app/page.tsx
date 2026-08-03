@@ -22,10 +22,10 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-navy-400">
           <span>© {new Date().getFullYear()} ValueTrace. Transparent property valuation.</span>
           <div className="flex gap-6">
-            <Link href="/playground" className="hover:text-ink dark:hover:text-paper transition-colors">
+            <Link href="/playground" className="link-underline hover:text-ink dark:hover:text-paper transition-colors">
               Playground
             </Link>
-            <Link href="/admin" className="hover:text-ink dark:hover:text-paper transition-colors">
+            <Link href="/admin" className="link-underline hover:text-ink dark:hover:text-paper transition-colors">
               Admin
             </Link>
           </div>
