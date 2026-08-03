@@ -85,6 +85,20 @@ discount is shown with its reason, its math, and the rule that produced it.
   lost its card background in favor of a plain rule-divided list; and the
   hero now opens with a beat of anticipation before its first line
   appears, then unfolds roughly every two seconds.
+- **Hero-only rewrite** (`components/AuditTrailHero.tsx`) — headline and
+  subtext rewritten to withhold explanation rather than lead with it
+  ("The number isn't enough. Every rupee should have a reason."); the
+  valuation card restyled as a document ("Valuation Worksheet," a
+  reference number, a date) rather than a dashboard; the card tilts a
+  couple of degrees toward the cursor (spring-smoothed, capped at 2.5°);
+  the secondary CTA dropped its pill/border for a plain underlined link;
+  a four-item trust strip (✓ Comparable Sales Method / Fully Transparent
+  / City-specific Adjustments / Every Premium Explained) replaced the old
+  two-item checklist; a very quiet dual radial-gradient sits behind the
+  hero only, contained to that section; and the reveal sequence now runs
+  Comparable → Load Factor → Age → Parking → Floor → Adjusted PSF → Final
+  Value over roughly 6–8 seconds before a long hold and loop. No other
+  section was touched in this pass.
 
 ## Design system
 
