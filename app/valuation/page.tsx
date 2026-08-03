@@ -59,7 +59,7 @@ export default function ValuationPage() {
                   onClick={addComparable}
                   className="inline-flex items-center gap-1.5 text-sm font-medium px-3 h-9 rounded-full border border-line dark:border-line-dark hover:bg-navy-50 dark:hover:bg-white/5 transition-colors"
                 >
-                  <Plus size={14} /> Add comparable
+                  <Plus size={14}  strokeWidth={1.5}/> Add comparable
                 </button>
               </div>
               {comparables.map((c) => (
@@ -77,7 +77,7 @@ export default function ValuationPage() {
               onClick={runValuation}
               className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink font-semibold hover:opacity-90 transition-opacity"
             >
-              <Calculator size={16} /> Calculate Valuation
+              <Calculator size={16}  strokeWidth={1.5}/> Calculate Valuation
             </button>
           </div>
 
@@ -89,7 +89,7 @@ export default function ValuationPage() {
                   onClick={() => setShowReport(true)}
                   className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-full border border-line dark:border-line-dark font-semibold text-sm hover:border-gold hover:text-gold transition-colors"
                 >
-                  <FileText size={15} /> Download Full Report
+                  <FileText size={15}  strokeWidth={1.5}/> Download Full Report
                 </button>
                 <AskAiPanel results={result.comparables} />
                 <div className="space-y-4">

@@ -48,7 +48,7 @@ export default function AskAiPanel({ results }: { results: ComparableResult[] })
   return (
     <div className="card-surface p-6">
       <div className="flex items-center gap-2 mb-1">
-        <Sparkles size={16} className="text-gold" />
+        <Sparkles size={16} className="text-gold"  strokeWidth={1.5}/>
         <h3 className="font-display font-semibold">Ask about this valuation</h3>
       </div>
       <p className="text-xs text-navy-400 mb-4">
@@ -93,7 +93,7 @@ export default function AskAiPanel({ results }: { results: ComparableResult[] })
           aria-label="Ask"
           className="w-10 h-10 grid place-items-center rounded-lg bg-ink text-paper dark:bg-paper dark:text-ink hover:opacity-90 transition-opacity shrink-0"
         >
-          <Send size={15} />
+          <Send size={15}  strokeWidth={1.5}/>
         </button>
       </div>
     </div>

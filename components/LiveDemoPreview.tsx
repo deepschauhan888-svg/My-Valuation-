@@ -9,7 +9,7 @@ function useCountUp(target: number, active: boolean) {
   const [value, setValue] = useState(0);
   useEffect(() => {
     if (!active) return;
-    const duration = 1100;
+    const duration = 1600;
     const start = performance.now();
     function tick(now: number) {
       const progress = Math.min(1, (now - start) / duration);
@@ -28,15 +28,15 @@ export default function LiveDemoPreview() {
   const psf = useCountUp(9983, inView);
 
   return (
-    <section ref={ref} className="max-w-6xl mx-auto px-6 py-24">
-      <div className="text-center max-w-lg mx-auto mb-10">
-        <div className="eyebrow mb-3">See it work first</div>
+    <section ref={ref} className="max-w-5xl mx-auto px-6 py-32">
+      <div className="text-center measure mx-auto mb-16">
+        <div className="eyebrow mb-4">See it work first</div>
         <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight">
-          This is the whole workflow — before you enter a single number.
+          The whole workflow, before you enter a number.
         </h2>
       </div>
 
-      <div className="card-surface p-8 grid md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-6 items-center">
+      <div className="card-surface p-10 grid md:grid-cols-[1fr_auto_1fr_auto_1fr] gap-8 items-center">
         <div>
           <div className="eyebrow mb-3">Subject</div>
           <ul className="space-y-1.5 text-sm">
@@ -46,7 +46,7 @@ export default function LiveDemoPreview() {
           </ul>
         </div>
 
-        <ArrowLeftRight size={18} className="text-navy-400 mx-auto hidden md:block" />
+        <ArrowLeftRight size={18} className="text-navy-400 mx-auto hidden md:block"  strokeWidth={1.5}/>
 
         <div>
           <div className="eyebrow mb-3">Comparable</div>
@@ -57,7 +57,7 @@ export default function LiveDemoPreview() {
           </ul>
         </div>
 
-        <ArrowRight size={18} className="text-navy-400 mx-auto hidden md:block" />
+        <ArrowRight size={18} className="text-navy-400 mx-auto hidden md:block"  strokeWidth={1.5}/>
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -68,16 +68,16 @@ export default function LiveDemoPreview() {
           <div className="ledger-figure font-display font-bold text-3xl text-gold">
             ₹{psf.toLocaleString("en-IN")}
           </div>
-          <div className="text-xs text-navy-400 mt-1">after 5 visible adjustments</div>
+          <div className="text-xs text-navy-400 mt-1.5">after 4 visible adjustments</div>
         </motion.div>
       </div>
 
-      <div className="text-center mt-10">
+      <div className="text-center mt-14">
         <Link
           href="/valuation"
           className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink font-semibold transition-all hover:opacity-90 hover:-translate-y-px"
         >
-          Start Your Valuation <ArrowRight size={16} />
+          Start Your Valuation <ArrowRight size={16}  strokeWidth={1.5}/>
         </Link>
       </div>
     </section>

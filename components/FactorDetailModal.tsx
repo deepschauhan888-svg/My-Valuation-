@@ -39,7 +39,7 @@ export default function FactorDetailModal({
                 aria-label="Close"
                 className="w-8 h-8 grid place-items-center rounded-full hover:bg-navy-50 dark:hover:bg-white/5 transition-colors shrink-0"
               >
-                <X size={16} />
+                <X size={16}  strokeWidth={1.5}/>
               </button>
             </div>
 

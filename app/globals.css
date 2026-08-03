@@ -7,8 +7,14 @@
     scroll-behavior: smooth;
   }
   ::selection {
-    background-color: #B8862E;
+    background-color: #9C7A45;
     color: #fff;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
   }
 }
 
@@ -20,15 +26,24 @@
   }
 
   .card-surface {
-    @apply bg-surface dark:bg-surface-dark border border-line dark:border-line-dark rounded-2xl transition-all duration-300;
+    @apply bg-surface dark:bg-surface-dark border border-line dark:border-line-dark rounded-2xl transition-all duration-500;
+    box-shadow: 0 1px 2px rgba(10, 14, 20, 0.02);
   }
 
   .card-lift {
-    @apply hover:-translate-y-0.5 hover:shadow-[0_20px_45px_-28px_rgba(0,0,0,0.22)];
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px -24px rgba(10, 14, 20, 0.18);
   }
 
   .eyebrow {
-    @apply font-mono text-xs uppercase tracking-[0.18em] text-navy-400;
+    @apply font-mono text-xs uppercase tracking-[0.2em] text-navy-400;
+  }
+
+  .measure {
+    max-width: 62ch;
   }
 
   .link-underline {
@@ -36,7 +51,7 @@
     background-position: 0 100%;
     background-repeat: no-repeat;
     background-size: 0% 1px;
-    transition: background-size 0.3s ease;
+    transition: background-size 0.4s ease;
   }
   .link-underline:hover {
     background-size: 100% 1px;

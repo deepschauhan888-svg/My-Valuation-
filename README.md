@@ -63,19 +63,28 @@ discount is shown with its reason, its math, and the rule that produced it.
 - Dark/light mode with no flash-of-wrong-theme (a tiny inline script sets
   the class before paint), fully responsive, keyboard-focusable controls,
   and `prefers-reduced-motion` respected.
-- **Craft pass** — the hero's live valuation now unfolds slowly (one
-  factor every ~1.9s, with a blur-to-clear reveal) and fades slightly on
-  scroll for a subtle parallax exit; section headings fade in on view;
-  cards lift softly on hover instead of using shadows/gradients for
-  emphasis; nav and footer links use a quiet underline-on-hover instead
-  of a color swap; a minimal loading screen (logo + one line) shows once
-  per session; and a subtle custom cursor (a small dot with a lagging
-  ring that expands over interactive elements) runs on desktop pointers
-  only — it's absent entirely on touch devices and when the OS requests
-  reduced motion. The "See every calculation" phrase in the hero lost its
-  gradient text treatment in favor of a quiet gold underline, in line
-  with keeping color used functionally (premium/discount/final value)
-  rather than decoratively.
+- **Cinematic pass** — the hero's live valuation unfolds with a
+  blur-to-clear reveal and fades slightly on scroll for a subtle parallax
+  exit; section headings fade in on view; nav and footer links use a
+  quiet underline-on-hover instead of a color swap; a minimal loading
+  screen (logo + one line) shows once per session, skipped instantly
+  under reduced motion; and a subtle custom cursor (a small dot with a
+  lagging ring that expands over interactive elements) runs on desktop
+  pointers only — absent on touch devices and under reduced motion.
+- **Restraint pass** — gold shifted from a bright accent to a muted brass
+  (`#9C7A45`), premium/discount tones softened to match; card shadows
+  reduced to a near-invisible hairline so surfaces read as paper rather
+  than software; hover lifts use a slow custom easing curve instead of a
+  shadow bloom; all buttons dropped scale-based tap/hover motion in favor
+  of a 1px vertical nudge; every Lucide icon now shares a single
+  `strokeWidth={1.5}`; body copy is capped to a 62-character measure
+  (`.measure` utility) for calmer reading; "How It Works" became a quiet
+  numbered list (large brass numerals, no icons, no boxes) instead of a
+  3-card grid; "Why We're Different" dropped its two bordered boxes for a
+  single divided two-column list; the methodology's "principles" block
+  lost its card background in favor of a plain rule-divided list; and the
+  hero now opens with a beat of anticipation before its first line
+  appears, then unfolds roughly every two seconds.
 
 ## Design system
 

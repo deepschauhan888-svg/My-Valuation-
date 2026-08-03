@@ -12,13 +12,13 @@ export default function ValuationReport({ result, onClose }: { result: Valuation
           onClick={() => window.print()}
           className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-gold text-white text-sm font-semibold hover:opacity-90 transition-opacity"
         >
-          <Printer size={15} /> Print / Save as PDF
+          <Printer size={15}  strokeWidth={1.5}/> Print / Save as PDF
         </button>
         <button
           onClick={onClose}
           className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
         >
-          <X size={15} /> Close
+          <X size={15}  strokeWidth={1.5}/> Close
         </button>
       </div>
 

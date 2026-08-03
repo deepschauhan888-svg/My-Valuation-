@@ -27,7 +27,7 @@ export default function AdjustmentRow({ line }: { line: AdjustmentLine }) {
           <ChevronDown
             size={15}
             className={`text-navy-400 transition-transform ${open ? "rotate-180" : ""}`}
-          />
+           strokeWidth={1.5}/>
         </span>
       </button>
       {open && (

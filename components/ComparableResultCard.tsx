@@ -29,9 +29,9 @@ function QualityBadge({ quality }: { quality: ComparableResult["quality"] }) {
             {quality.reasons.map((r) => (
               <li key={r.label} className="flex items-center gap-2 text-xs">
                 {r.met ? (
-                  <Check size={13} className="text-premium shrink-0" />
+                  <Check size={13} className="text-premium shrink-0"  strokeWidth={1.5}/>
                 ) : (
-                  <X size={13} className="text-discount shrink-0" />
+                  <X size={13} className="text-discount shrink-0"  strokeWidth={1.5}/>
                 )}
                 <span className={r.met ? "" : "text-navy-400"}>{r.label}</span>
               </li>
@@ -69,7 +69,7 @@ export default function ComparableResultCard({ result, index }: { result: Compar
             <div className="ledger-figure text-sm font-semibold text-gold">{formatPSF(result.adjustedPsf)}</div>
           </div>
           <button onClick={() => setExpanded((e) => !e)} aria-label="Toggle breakdown">
-            <ChevronRight size={16} className={`text-navy-400 transition-transform ${expanded ? "rotate-90" : ""}`} />
+            <ChevronRight size={16} className={`text-navy-400 transition-transform ${expanded ? "rotate-90" : ""}`}  strokeWidth={1.5}/>
           </button>
         </div>
       </div>

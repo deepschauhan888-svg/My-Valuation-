@@ -257,7 +257,7 @@ export default function AdminPage() {
                     onClick={publishVersion}
                     className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-ink text-paper dark:bg-paper dark:text-ink text-sm font-semibold hover:opacity-90 transition-opacity shrink-0"
                   >
-                    <Plus size={14} /> Publish new version
+                    <Plus size={14}  strokeWidth={1.5}/> Publish new version
                   </button>
                 </div>
                 <ul className="space-y-3">

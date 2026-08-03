@@ -46,7 +46,7 @@ export default function PropertyForm({
         />
         {isComparable && onRemove && (
           <button onClick={onRemove} className="text-navy-400 hover:text-discount transition-colors" aria-label="Remove comparable">
-            <Trash2 size={16} />
+            <Trash2 size={16}  strokeWidth={1.5}/>
           </button>
         )}
       </div>

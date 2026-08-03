@@ -17,7 +17,7 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 
   useEffect(() => {
     if (!inView) return;
-    const duration = 900;
+    const duration = 1300;
     const start = performance.now();
     function tick(now: number) {
       const progress = Math.min(1, (now - start) / duration);
@@ -39,7 +39,7 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 export default function TrustMetrics() {
   return (
     <section className="border-y border-line dark:border-line-dark bg-navy-50/40 dark:bg-white/[0.02]">
-      <div className="max-w-6xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-8">
+      <div className="max-w-6xl mx-auto px-6 py-20 grid grid-cols-2 md:grid-cols-4 gap-10">
         {METRICS.map((m, i) => (
           <motion.div
             key={m.label}
@@ -50,7 +50,7 @@ export default function TrustMetrics() {
             className="text-center"
           >
             <Counter value={m.value} suffix={m.suffix} />
-            <div className="text-xs md:text-sm text-navy-400 mt-2">{m.label}</div>
+            <div className="eyebrow mt-3 !text-navy-400">{m.label}</div>
           </motion.div>
         ))}
       </div>

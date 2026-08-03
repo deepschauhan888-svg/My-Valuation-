@@ -21,16 +21,16 @@ const config: Config = {
           dark: "#232A38",
         },
         gold: {
-          DEFAULT: "#B8862E",
-          soft: "#E7C787",
+          DEFAULT: "#9C7A45",
+          soft: "#D9C49B",
         },
         premium: {
-          DEFAULT: "#1F9D6F",
-          soft: "#D3EEE1",
+          DEFAULT: "#3D8F68",
+          soft: "#D6E9DE",
         },
         discount: {
-          DEFAULT: "#C24B3F",
-          soft: "#F5DAD5",
+          DEFAULT: "#B15848",
+          soft: "#EFDAD3",
         },
         navy: {
           50: "#EEF1F6",
