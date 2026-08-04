@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Nav from "@/components/Nav";
 import { CITY_RULE_SETS, RULE_VERSION_HISTORY, RuleVersionEntry } from "@/lib/rules-data";
 import { CityRuleSet, NumericRule, CategoricalRule } from "@/lib/types";
 import { categoricalMatrix } from "@/lib/valuation-engine";
 import { formatPercent } from "@/lib/format";
+import AnimatedNumber from "@/components/AnimatedNumber";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import { Plus } from "lucide-react";
 
@@ -68,6 +70,31 @@ function NumericRuleEditor({
   );
 }
 
+function TabPanel({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    ref.current?.style.setProperty("--spot-x", `${x}%`);
+    ref.current?.style.setProperty("--spot-y", `${y}%`);
+  }
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="card-surface spotlight-card p-6"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 function ComparisonMatrixTable({ rule }: { rule: CategoricalRule }) {
   const cells = categoricalMatrix(rule);
   const values = rule.entries.map((e) => e.value);
@@ -95,11 +122,11 @@ function ComparisonMatrixTable({ rule }: { rule: CategoricalRule }) {
                 return (
                   <td
                     key={c}
-                    className={`p-2 text-center ledger-figure ${
+                    className={`p-2 text-center ledger-figure transition-colors duration-300 hover:bg-navy-50 dark:hover:bg-white/5 ${
                       percent > 0 ? "text-premium" : percent < 0 ? "text-discount" : "text-navy-400"
                     }`}
                   >
-                    {formatPercent(percent)}
+                    <AnimatedNumber value={percent} format={formatPercent} duration={350} />
                   </td>
                 );
               })}
@@ -162,7 +189,7 @@ export default function AdminPage() {
               <button
                 key={c}
                 onClick={() => setCity(c)}
-                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-colors tap-feedback ${
                   city === c ? "bg-ink text-paper dark:bg-paper dark:text-ink" : "hover:bg-navy-50 dark:hover:bg-white/5 text-navy-400"
                 }`}
               >
@@ -178,7 +205,7 @@ export default function AdminPage() {
                   <button
                     key={t}
                     onClick={() => setTab(t)}
-                    className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-colors ${
+                    className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-colors tap-feedback ${
                       tab === t
                         ? "bg-gold text-white"
                         : "border border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold"
@@ -193,108 +220,110 @@ export default function AdminPage() {
               </span>
             </div>
 
-            {tab === "Numeric Rules" && (
-              <div className="card-surface p-6">
-                <NumericRuleEditor label="Load Factor" rule={active.loadFactor} onChange={(next) => updateActive({ loadFactor: next })} />
-                <NumericRuleEditor label="Age" rule={active.age} onChange={(next) => updateActive({ age: next })} />
-                <NumericRuleEditor label="Floor Number" rule={active.floor} onChange={(next) => updateActive({ floor: next })} />
-              </div>
-            )}
+            <AnimatePresence mode="wait">
+              {tab === "Numeric Rules" && (
+                <TabPanel key="Numeric Rules">
+                  <NumericRuleEditor label="Load Factor" rule={active.loadFactor} onChange={(next) => updateActive({ loadFactor: next })} />
+                  <NumericRuleEditor label="Age" rule={active.age} onChange={(next) => updateActive({ age: next })} />
+                  <NumericRuleEditor label="Floor Number" rule={active.floor} onChange={(next) => updateActive({ floor: next })} />
+                </TabPanel>
+              )}
 
-            {tab === "Comparison Matrix" && (
-              <div className="card-surface p-6">
-                <div className="flex gap-2 flex-wrap mb-5">
-                  {MATRIX_CATEGORIES.map((m) => (
+              {tab === "Comparison Matrix" && (
+                <TabPanel key="Comparison Matrix">
+                  <div className="flex gap-2 flex-wrap mb-5">
+                    {MATRIX_CATEGORIES.map((m) => (
+                      <button
+                        key={String(m.key)}
+                        onClick={() => setMatrixCategory(m.key)}
+                        className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors tap-feedback ${
+                          matrixCategory === m.key
+                            ? "border-gold text-gold"
+                            : "border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold"
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    ))}
+                  </div>
+                  <ComparisonMatrixTable rule={active[matrixCategory] as CategoricalRule} />
+                  <p className="text-xs text-navy-400 mt-4">
+                    Reading the grid: pick the subject&apos;s row and the comparable&apos;s column. The cell is the
+                    signed adjustment applied to that comparable — negative when the subject is superior,
+                    positive when the comparable is superior.
+                  </p>
+                </TabPanel>
+              )}
+
+              {tab === "Flat Rules" && (
+                <TabPanel key="Flat Rules">
+                  <div className="flex items-center justify-between py-3 border-b border-line dark:border-line-dark text-sm">
+                    <span>Parking — % per covered slot</span>
+                    <span className="ledger-figure font-semibold">{active.parkingPerSlot.percent}%</span>
+                  </div>
+                  <div className="flex items-center justify-between py-3 border-b border-line dark:border-line-dark text-sm">
+                    <span>Balcony — % per balcony</span>
+                    <span className="ledger-figure font-semibold">{active.balconyPerUnit.percent}%</span>
+                  </div>
+                  <div className="flex items-center justify-between py-3 text-sm">
+                    <span>Legal Issues — flat penalty</span>
+                    <span className="ledger-figure font-semibold text-discount">−{active.legalIssuesPenalty.percent}%</span>
+                  </div>
+                </TabPanel>
+              )}
+
+              {tab === "Version History" && (
+                <TabPanel key="Version History">
+                  <div className="flex gap-2 mb-5">
+                    <input
+                      value={versionNote}
+                      onChange={(e) => setVersionNote(e.target.value)}
+                      placeholder="Note for this version (e.g. Tightened floor premium cap)"
+                      className="flex-1 h-10 px-3 rounded-lg border border-line dark:border-line-dark bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gold/40"
+                    />
                     <button
-                      key={String(m.key)}
-                      onClick={() => setMatrixCategory(m.key)}
-                      className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
-                        matrixCategory === m.key
-                          ? "border-gold text-gold"
-                          : "border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold"
-                      }`}
+                      onClick={publishVersion}
+                      className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-ink text-paper dark:bg-paper dark:text-ink text-sm font-semibold hover:opacity-90 transition-opacity shrink-0 tap-feedback"
                     >
-                      {m.label}
+                      <Plus size={14} strokeWidth={1.5} /> Publish new version
                     </button>
-                  ))}
-                </div>
-                <ComparisonMatrixTable rule={active[matrixCategory] as CategoricalRule} />
-                <p className="text-xs text-navy-400 mt-4">
-                  Reading the grid: pick the subject&apos;s row and the comparable&apos;s column. The cell is the
-                  signed adjustment applied to that comparable — negative when the subject is superior,
-                  positive when the comparable is superior.
-                </p>
-              </div>
-            )}
-
-            {tab === "Flat Rules" && (
-              <div className="card-surface p-6">
-                <div className="flex items-center justify-between py-3 border-b border-line dark:border-line-dark text-sm">
-                  <span>Parking — % per covered slot</span>
-                  <span className="ledger-figure font-semibold">{active.parkingPerSlot.percent}%</span>
-                </div>
-                <div className="flex items-center justify-between py-3 border-b border-line dark:border-line-dark text-sm">
-                  <span>Balcony — % per balcony</span>
-                  <span className="ledger-figure font-semibold">{active.balconyPerUnit.percent}%</span>
-                </div>
-                <div className="flex items-center justify-between py-3 text-sm">
-                  <span>Legal Issues — flat penalty</span>
-                  <span className="ledger-figure font-semibold text-discount">−{active.legalIssuesPenalty.percent}%</span>
-                </div>
-              </div>
-            )}
-
-            {tab === "Version History" && (
-              <div className="card-surface p-6">
-                <div className="flex gap-2 mb-5">
-                  <input
-                    value={versionNote}
-                    onChange={(e) => setVersionNote(e.target.value)}
-                    placeholder="Note for this version (e.g. Tightened floor premium cap)"
-                    className="flex-1 h-10 px-3 rounded-lg border border-line dark:border-line-dark bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-gold/40"
-                  />
-                  <button
-                    onClick={publishVersion}
-                    className="inline-flex items-center gap-1.5 h-10 px-4 rounded-lg bg-ink text-paper dark:bg-paper dark:text-ink text-sm font-semibold hover:opacity-90 transition-opacity shrink-0"
-                  >
-                    <Plus size={14}  strokeWidth={1.5}/> Publish new version
-                  </button>
-                </div>
-                <ul className="space-y-3">
-                  {(history[city] ?? []).slice().reverse().map((v) => (
-                    <li key={v.version} className="flex items-start justify-between border-b border-line dark:border-line-dark pb-3 last:border-0">
-                      <div>
-                        <div className="text-sm font-semibold">
-                          {active.city.replace("_", " ")} v{v.version}.0
+                  </div>
+                  <ul className="space-y-3">
+                    {(history[city] ?? []).slice().reverse().map((v) => (
+                      <li key={v.version} className="flex items-start justify-between border-b border-line dark:border-line-dark pb-3 last:border-0">
+                        <div>
+                          <div className="text-sm font-semibold">
+                            {active.city.replace("_", " ")} v{v.version}.0
+                          </div>
+                          <div className="text-xs text-navy-400">{v.note}</div>
                         </div>
-                        <div className="text-xs text-navy-400">{v.note}</div>
-                      </div>
-                      <div className="text-right text-xs text-navy-400">
-                        <div>{v.effectiveDate}</div>
-                        <div>{v.configuredBy}</div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                        <div className="text-right text-xs text-navy-400">
+                          <div>{v.effectiveDate}</div>
+                          <div>{v.configuredBy}</div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </TabPanel>
+              )}
 
-            {tab === "Analytics" && (
-              <div className="card-surface p-6">
-                <h2 className="font-display font-semibold mb-1">Analytics preview</h2>
-                <p className="text-xs text-navy-400 mb-4">Sample data — replace with a Supabase query over the valuations table.</p>
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={SAMPLE_ANALYTICS}>
-                      <XAxis dataKey="city" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip />
-                      <Bar dataKey="valuations" fill="#B8862E" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              {tab === "Analytics" && (
+                <TabPanel key="Analytics">
+                  <h2 className="font-display font-semibold mb-1">Analytics preview</h2>
+                  <p className="text-xs text-navy-400 mb-4">Sample data — replace with a Supabase query over the valuations table.</p>
+                  <div className="h-56">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={SAMPLE_ANALYTICS}>
+                        <XAxis dataKey="city" tick={{ fontSize: 11 }} />
+                        <YAxis tick={{ fontSize: 11 }} />
+                        <Tooltip />
+                        <Bar dataKey="valuations" fill="#B8862E" radius={[6, 6, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </TabPanel>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

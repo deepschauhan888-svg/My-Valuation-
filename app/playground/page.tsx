@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Nav from "@/components/Nav";
 import { blankSubject } from "@/lib/blank-property";
 import { calculateComparable } from "@/lib/valuation-engine";
 import { getRuleSetForCity } from "@/lib/rules-data";
 import { formatPercent, formatPSF } from "@/lib/format";
 import { Facing } from "@/lib/types";
-import { motion } from "framer-motion";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
 const FACINGS: Facing[] = ["south", "south-west", "west", "other", "north", "north-east", "east"];
 
@@ -40,6 +40,16 @@ export default function PlaygroundPage() {
 
   const rules = getRuleSetForCity(subject.city);
   const result = calculateComparable(subject, comparable, rules);
+
+  const resultCardRef = useRef<HTMLDivElement>(null);
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = resultCardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    resultCardRef.current?.style.setProperty("--spot-x", `${x}%`);
+    resultCardRef.current?.style.setProperty("--spot-y", `${y}%`);
+  }
 
   return (
     <main>
@@ -120,22 +130,21 @@ export default function PlaygroundPage() {
           </div>
 
           <div className="space-y-6">
-            <div className="card-surface p-8 text-center">
+            <div
+              ref={resultCardRef}
+              onMouseMove={handleMouseMove}
+              className="card-surface spotlight-card p-8 text-center"
+            >
               <div className="eyebrow mb-2">Adjusted PSF</div>
-              <motion.div
-                key={result.adjustedPsf}
-                initial={{ opacity: 0.4, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="font-display font-bold text-4xl text-gold ledger-figure"
-              >
-                {formatPSF(result.adjustedPsf)}
-              </motion.div>
+              <div className="font-display font-bold text-4xl text-gold ledger-figure">
+                <AnimatedNumber value={result.adjustedPsf} format={formatPSF} duration={450} />
+              </div>
               <div className="text-sm text-navy-400 mt-2">
                 Total adjustment {formatPercent(result.totalAdjustmentPercent)} from base {formatPSF(result.derived.psf)}
               </div>
             </div>
 
-            <div className="card-surface p-6">
+            <div className="card-surface spotlight-card p-6">
               <h2 className="font-display font-semibold mb-3 text-sm">Live breakdown</h2>
               {result.adjustments.length === 0 ? (
                 <p className="text-sm text-navy-400">No difference from the subject on any factor.</p>
@@ -145,7 +154,7 @@ export default function PlaygroundPage() {
                     <li key={a.key} className="flex items-center justify-between text-sm">
                       <span>{a.label}</span>
                       <span className={`ledger-figure font-semibold ${a.percent >= 0 ? "text-premium" : "text-discount"}`}>
-                        {formatPercent(a.percent)}
+                        <AnimatedNumber value={a.percent} format={formatPercent} duration={400} />
                       </span>
                     </li>
                   ))}

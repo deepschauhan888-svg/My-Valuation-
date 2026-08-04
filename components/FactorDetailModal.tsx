@@ -37,7 +37,7 @@ export default function FactorDetailModal({
               <button
                 onClick={onClose}
                 aria-label="Close"
-                className="w-8 h-8 grid place-items-center rounded-full hover:bg-navy-50 dark:hover:bg-white/5 transition-colors shrink-0"
+                className="w-8 h-8 grid place-items-center rounded-full hover:bg-navy-50 dark:hover:bg-white/5 transition-colors shrink-0 tap-feedback"
               >
                 <X size={16}  strokeWidth={1.5}/>
               </button>

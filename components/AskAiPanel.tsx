@@ -61,7 +61,7 @@ export default function AskAiPanel({ results }: { results: ComparableResult[] })
             <button
               key={s}
               onClick={() => ask(s)}
-              className="text-xs px-3 py-1.5 rounded-full border border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold transition-colors"
+              className="text-xs px-3 py-1.5 rounded-full border border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold transition-colors tap-feedback"
             >
               {s}
             </button>
@@ -91,7 +91,7 @@ export default function AskAiPanel({ results }: { results: ComparableResult[] })
         <button
           onClick={() => ask(question)}
           aria-label="Ask"
-          className="w-10 h-10 grid place-items-center rounded-lg bg-ink text-paper dark:bg-paper dark:text-ink hover:opacity-90 transition-opacity shrink-0"
+          className="w-10 h-10 grid place-items-center rounded-lg bg-ink text-paper dark:bg-paper dark:text-ink hover:opacity-90 transition-opacity shrink-0 tap-feedback"
         >
           <Send size={15}  strokeWidth={1.5}/>
         </button>

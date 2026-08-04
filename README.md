@@ -99,6 +99,22 @@ discount is shown with its reason, its math, and the rule that produced it.
   Comparable → Load Factor → Age → Parking → Floor → Adjusted PSF → Final
   Value over roughly 6–8 seconds before a long hold and loop. No other
   section was touched in this pass.
+- **Motion & interaction pass** (no layout, copy, or section changes) —
+  `components/AmbientBackground.tsx` adds a barely-there grain texture
+  and two slow-floating soft lights behind the whole site;
+  `components/SpotlightCard.tsx` and the `.spotlight-card` CSS utility
+  give a cursor-following light + brightening border to the hero card,
+  `ResultSummary`, `ComparableResultCard`, the Playground's result
+  cards, and every admin tab panel; `components/AnimatedNumber.tsx`
+  smoothly tweens numbers instead of snapping them (final value,
+  average PSF, comparable scores, playground PSF, matrix cell percents);
+  a `.tap-feedback` utility gives every button a tiny, fast press
+  compression; `app/template.tsx` fades internal navigation instead of
+  flashing; admin tab switches now cross-fade via `AnimatePresence`
+  instead of swapping instantly; and How It Works / Why We're Different
+  / Methodology each got their own reveal language (blur-in stagger,
+  independently-staggered lists, and a clip-reveal headline
+  respectively) instead of one repeated animation.
 
 ## Design system
 

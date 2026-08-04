@@ -22,8 +22,16 @@ export default function HowItWorks() {
         className="mb-16"
       >
         <div className="eyebrow mb-4">How it works</div>
-        <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight measure">
-          Six steps. Every one of them visible.
+        <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight measure clip-reveal">
+          <motion.span
+            initial={{ y: "100%" }}
+            whileInView={{ y: "0%" }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="block"
+          >
+            Six steps. Every one of them visible.
+          </motion.span>
         </h2>
       </motion.div>
 
@@ -31,10 +39,10 @@ export default function HowItWorks() {
         {STEPS.map((step, i) => (
           <motion.div
             key={step.title}
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
+            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: i * 0.05 }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: i * 0.09 }}
             className="grid grid-cols-[3.5rem_1fr] md:grid-cols-[5rem_1fr] gap-6 md:gap-10 py-8 border-t border-line dark:border-line-dark last:border-b"
           >
             <span className="font-display font-light text-3xl md:text-4xl text-gold/70 tabular-nums">

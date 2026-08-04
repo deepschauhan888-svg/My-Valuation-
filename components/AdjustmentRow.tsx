@@ -13,7 +13,7 @@ export default function AdjustmentRow({ line }: { line: AdjustmentLine }) {
     <div className="border-b border-line dark:border-line-dark last:border-0">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between py-3 text-left group"
+        className="w-full flex items-center justify-between py-3 text-left group tap-feedback"
       >
         <span className="text-sm font-medium group-hover:text-gold transition-colors">{line.label}</span>
         <span className="flex items-center gap-3">

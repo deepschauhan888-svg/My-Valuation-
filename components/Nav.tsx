@@ -29,7 +29,7 @@ export default function Nav() {
           <ThemeToggle />
           <Link
             href="/valuation"
-            className="hidden sm:inline-flex items-center h-9 px-4 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink text-sm font-semibold transition-all hover:opacity-90 hover:-translate-y-px"
+            className="hidden sm:inline-flex items-center h-9 px-4 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink text-sm font-semibold transition-all hover:opacity-90 hover:-translate-y-px tap-feedback"
           >
             Start Valuation
           </Link>

@@ -31,11 +31,46 @@
   }
 
   .card-lift {
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease, border-color 0.5s ease;
   }
   .card-lift:hover {
     transform: translateY(-2px);
     box-shadow: 0 12px 32px -24px rgba(10, 14, 20, 0.18);
+    border-color: rgba(156, 122, 69, 0.35);
+  }
+
+  /* Cursor-following light, set via --spot-x/--spot-y on mousemove (see SpotlightCard). */
+  .spotlight-card {
+    position: relative;
+    isolation: isolate;
+  }
+  .spotlight-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(220px circle at var(--spot-x, 50%) var(--spot-y, 0%), rgba(156, 122, 69, 0.08), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .spotlight-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Tiny, fast press feedback for anything interactive. */
+  .tap-feedback {
+    transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .tap-feedback:active {
+    transform: scale(0.98);
+  }
+
+  /* Wrap a heading in .clip-reveal, animate the inner span's translateY via framer-motion. */
+  .clip-reveal {
+    display: block;
+    overflow: hidden;
   }
 
   .eyebrow {
@@ -62,6 +97,11 @@
 .custom-cursor-active button,
 .custom-cursor-active [role="button"] {
   cursor: none;
+}
+
+/* Barely-there grain, layered under everything via AmbientBackground. */
+.grain-texture {
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNjAnIGhlaWdodD0nMTYwJz48ZmlsdGVyIGlkPSduJz48ZmVUdXJidWxlbmNlIHR5cGU9J2ZyYWN0YWxOb2lzZScgYmFzZUZyZXF1ZW5jeT0nMC44NScgbnVtT2N0YXZlcz0nMicgc3RpdGNoVGlsZXM9J3N0aXRjaCcvPjwvZmlsdGVyPjxyZWN0IHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnIGZpbHRlcj0ndXJsKCNuKScvPjwvc3ZnPg==");
 }
 
 @media (prefers-reduced-motion: reduce) {

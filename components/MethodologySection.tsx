@@ -23,10 +23,23 @@ export default function MethodologySection() {
   return (
     <section id="methodology" className="max-w-6xl mx-auto px-6 py-32">
       <div className="grid lg:grid-cols-2 gap-20">
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+        >
           <div className="eyebrow mb-4">Our methodology</div>
-          <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight mb-6 measure">
-            The Comparable Sales Method, laid out step by step.
+          <h2 className="font-display font-bold text-3xl md:text-4xl tracking-tight mb-6 measure clip-reveal">
+            <motion.span
+              initial={{ y: "100%" }}
+              whileInView={{ y: "0%" }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+              className="block"
+            >
+              The Comparable Sales Method, laid out step by step.
+            </motion.span>
           </h2>
           <p className="text-navy-400 mb-4 leading-relaxed measure">
             Fourteen factors, compared one at a time. Area is never adjusted directly — it only feeds
@@ -38,13 +51,13 @@ export default function MethodologySection() {
               <button
                 key={f}
                 onClick={() => setOpenFactor(f)}
-                className="text-xs font-medium px-3 py-1.5 rounded-full border border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold transition-colors duration-300"
+                className="text-xs font-medium px-3 py-1.5 rounded-full border border-line dark:border-line-dark text-navy-400 hover:border-gold hover:text-gold transition-colors duration-300 tap-feedback"
               >
                 {f}
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         <div className="flex flex-col items-center gap-2">
           {FLOW.map((step, i) => (

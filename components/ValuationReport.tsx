@@ -10,13 +10,13 @@ export default function ValuationReport({ result, onClose }: { result: Valuation
       <div className="max-w-3xl mx-auto flex justify-end gap-2 mb-4 print:hidden">
         <button
           onClick={() => window.print()}
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-gold text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-full bg-gold text-white text-sm font-semibold hover:opacity-90 transition-opacity tap-feedback"
         >
           <Printer size={15}  strokeWidth={1.5}/> Print / Save as PDF
         </button>
         <button
           onClick={onClose}
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-full border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition-colors tap-feedback"
         >
           <X size={15}  strokeWidth={1.5}/> Close
         </button>

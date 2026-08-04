@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ComparableResult } from "@/lib/types";
 import { formatPSF, formatPercent } from "@/lib/format";
 import AdjustmentRow from "./AdjustmentRow";
+import AnimatedNumber from "./AnimatedNumber";
 import { ChevronRight, Star, Check, X } from "lucide-react";
 
 function QualityBadge({ quality }: { quality: ComparableResult["quality"] }) {
@@ -13,7 +14,7 @@ function QualityBadge({ quality }: { quality: ComparableResult["quality"] }) {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-line dark:border-line-dark hover:border-gold transition-colors"
+        className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border border-line dark:border-line-dark hover:border-gold transition-colors tap-feedback"
       >
         <span className="flex text-gold">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -45,16 +46,28 @@ function QualityBadge({ quality }: { quality: ComparableResult["quality"] }) {
 
 export default function ComparableResultCard({ result, index }: { result: ComparableResult; index: number }) {
   const [expanded, setExpanded] = useState(index === 0);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = cardRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    cardRef.current?.style.setProperty("--spot-x", `${x}%`);
+    cardRef.current?.style.setProperty("--spot-y", `${y}%`);
+  }
 
   return (
     <motion.div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut", delay: index * 0.06 }}
-      className="card-surface card-lift overflow-hidden"
+      className="card-surface card-lift spotlight-card overflow-hidden"
     >
       <div className="w-full flex items-center justify-between p-6 text-left">
-        <button onClick={() => setExpanded((e) => !e)} className="flex-1 text-left">
+        <button onClick={() => setExpanded((e) => !e)} className="flex-1 text-left tap-feedback">
           <div className="eyebrow mb-1">Comparable {index + 1}</div>
           <div className="font-display font-semibold">{result.comparable.society || result.comparable.label}</div>
         </button>
@@ -66,9 +79,11 @@ export default function ComparableResultCard({ result, index }: { result: Compar
           </div>
           <div className="text-right">
             <div className="text-xs text-navy-400">Adjusted PSF</div>
-            <div className="ledger-figure text-sm font-semibold text-gold">{formatPSF(result.adjustedPsf)}</div>
+            <div className="ledger-figure text-sm font-semibold text-gold">
+              <AnimatedNumber value={result.adjustedPsf} format={formatPSF} />
+            </div>
           </div>
-          <button onClick={() => setExpanded((e) => !e)} aria-label="Toggle breakdown">
+          <button onClick={() => setExpanded((e) => !e)} aria-label="Toggle breakdown" className="tap-feedback">
             <ChevronRight size={16} className={`text-navy-400 transition-transform ${expanded ? "rotate-90" : ""}`}  strokeWidth={1.5}/>
           </button>
         </div>

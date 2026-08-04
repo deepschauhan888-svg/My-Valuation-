@@ -56,6 +56,14 @@ const config: Config = {
           "0%": { opacity: "0.4" },
           "100%": { opacity: "1" },
         },
+        "float-a": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(3%, 4%)" },
+        },
+        "float-b": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(-3%, -4%)" },
+        },
       },
       animation: {
         "ledger-in": "ledger-in 0.4s ease-out both",

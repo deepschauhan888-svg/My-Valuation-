@@ -68,6 +68,8 @@ export default function AuditTrailHero() {
     const py = (e.clientY - rect.top) / rect.height - 0.5;
     rotateY.set(px * TILT_LIMIT * 2);
     rotateX.set(-py * TILT_LIMIT * 2);
+    cardRef.current?.style.setProperty("--spot-x", `${(px + 0.5) * 100}%`);
+    cardRef.current?.style.setProperty("--spot-y", `${(py + 0.5) * 100}%`);
   }
   function handleCardMouseLeave() {
     rotateX.set(0);
@@ -143,6 +145,7 @@ export default function AuditTrailHero() {
           <Link href="/valuation" className="group">
             <motion.span
               whileHover={{ y: -1, backgroundColor: "rgba(0,0,0,0.82)" }}
+              whileTap={{ scale: 0.985 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
               className="inline-flex items-center gap-2 h-12 px-7 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink font-semibold"
             >
@@ -182,7 +185,7 @@ export default function AuditTrailHero() {
           onMouseMove={handleCardMouseMove}
           onMouseLeave={handleCardMouseLeave}
           style={{ rotateX: springRotateX, rotateY: springRotateY, transformStyle: "preserve-3d" }}
-          className="card-surface p-9 shadow-[0_20px_60px_-30px_rgba(10,14,20,0.16)]"
+          className="card-surface spotlight-card p-9 shadow-[0_20px_60px_-30px_rgba(10,14,20,0.16)]"
         >
           <div className="flex items-start justify-between mb-7 pb-5 border-b border-line dark:border-line-dark">
             <div>

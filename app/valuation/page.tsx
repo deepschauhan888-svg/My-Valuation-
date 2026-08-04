@@ -57,7 +57,7 @@ export default function ValuationPage() {
                 <h2 className="font-display font-semibold">Comparable properties</h2>
                 <button
                   onClick={addComparable}
-                  className="inline-flex items-center gap-1.5 text-sm font-medium px-3 h-9 rounded-full border border-line dark:border-line-dark hover:bg-navy-50 dark:hover:bg-white/5 transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium px-3 h-9 rounded-full border border-line dark:border-line-dark hover:bg-navy-50 dark:hover:bg-white/5 transition-colors tap-feedback"
                 >
                   <Plus size={14}  strokeWidth={1.5}/> Add comparable
                 </button>
@@ -75,7 +75,7 @@ export default function ValuationPage() {
 
             <button
               onClick={runValuation}
-              className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink font-semibold hover:opacity-90 transition-opacity"
+              className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-ink text-paper dark:bg-paper dark:text-ink font-semibold hover:opacity-90 transition-opacity tap-feedback"
             >
               <Calculator size={16}  strokeWidth={1.5}/> Calculate Valuation
             </button>
@@ -87,7 +87,7 @@ export default function ValuationPage() {
                 <ResultSummary result={result} />
                 <button
                   onClick={() => setShowReport(true)}
-                  className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-full border border-line dark:border-line-dark font-semibold text-sm hover:border-gold hover:text-gold transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-full border border-line dark:border-line-dark font-semibold text-sm hover:border-gold hover:text-gold transition-colors tap-feedback"
                 >
                   <FileText size={15}  strokeWidth={1.5}/> Download Full Report
                 </button>
