@@ -142,3 +142,12 @@ export interface LiveCityRuleSet {
   cityName: string;
   categories: LiveCategory[];
 }
+
+/**
+ * @deprecated Renamed to LiveCityRuleSet when the rule engine became
+ * database-driven (every category is now fetched live from Supabase
+ * rather than hardcoded). Kept as an alias so any import written against
+ * the old name still resolves — update call sites to LiveCityRuleSet
+ * when you touch them.
+ */
+export type CityRuleSet = LiveCityRuleSet;
