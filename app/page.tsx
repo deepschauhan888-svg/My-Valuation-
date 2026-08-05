@@ -6,8 +6,24 @@ import ComparisonSection from "@/components/ComparisonSection";
 import MethodologySection from "@/components/MethodologySection";
 import LiveDemoPreview from "@/components/LiveDemoPreview";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getCities, getPublishedRuleSetForCity } from "@/lib/supabase/queries";
 
-export default function Home() {
+async function getMethodologyCategories() {
+  try {
+    const supabase = createClient();
+    const cities = await getCities(supabase, { activeOnly: true });
+    if (!cities[0]) return [];
+    const ruleSet = await getPublishedRuleSetForCity(supabase, cities[0].slug);
+    return ruleSet.categories;
+  } catch {
+    return [];
+  }
+}
+
+export default async function Home() {
+  const categories = await getMethodologyCategories();
+
   return (
     <main>
       <Nav />
@@ -15,7 +31,7 @@ export default function Home() {
       <TrustMetrics />
       <HowItWorks />
       <ComparisonSection />
-      <MethodologySection />
+      <MethodologySection categories={categories} />
       <LiveDemoPreview />
 
       <footer className="border-t border-line dark:border-line-dark">

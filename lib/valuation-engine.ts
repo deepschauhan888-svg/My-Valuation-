@@ -1,9 +1,12 @@
 import {
   AdjustmentLine,
-  CategoricalRule,
-  CityRuleSet,
+  CategoryOption,
   ComparableResult,
-  NumericRule,
+  FlatPayload,
+  LiveCategory,
+  LiveCityRuleSet,
+  MatrixPayload,
+  NumericPayload,
   PropertyInput,
   ValuationResult,
 } from "./types";
@@ -19,8 +22,11 @@ import { scoreComparable } from "./quality-score";
 //
 //   Adjusted PSF = Comparable PSF - (Comparable PSF * Total Adjustment)
 //
-//   Total Adjustment is the sum of signed percentages below, expressed as a
-//   decimal (e.g. -0.03 for -3%).
+// Every category below is read live from Supabase (see lib/supabase/queries.ts)
+// — nothing here is hardcoded to a specific factor. Two derivations are
+// structural rather than admin-configurable, per the product's methodology:
+// Load Factor (from area/carpet area) and the Floor ratio (from floor
+// number/total floors). Area itself is never adjusted directly.
 // ---------------------------------------------------------------------------
 
 function clamp(value: number, cap: number): number {
@@ -32,52 +38,62 @@ function loadFactor(sbaSqft: number, carpetSqft: number): number {
   return ((sbaSqft - carpetSqft) / sbaSqft) * 100;
 }
 
-function numericAdjustment(
-  subjectValue: number,
-  comparableValue: number,
-  rule: NumericRule,
-  higherIsBetter: boolean
-): number {
-  if (!rule.enabled) return 0;
-  const diff = comparableValue - subjectValue; // positive if comparable's raw number is bigger
+function floorRatio(floorNumber: number, totalFloors: number): number {
+  if (totalFloors <= 0) return 0;
+  return (floorNumber / totalFloors) * 100;
+}
+
+/** Resolves a numeric category's raw value for a property — derived for the
+ *  two structural cases, otherwise read straight from `attributes`. */
+function numericValueFor(property: PropertyInput, categoryKey: string): number {
+  if (categoryKey === "loadFactor") return loadFactor(property.superBuiltUpAreaSqft, property.carpetAreaSqft);
+  if (categoryKey === "floor") return floorRatio(property.floorNumber, property.totalFloors);
+  const raw = property.attributes[categoryKey];
+  return raw !== undefined ? parseFloat(raw) || 0 : 0;
+}
+
+function numericAdjustment(subjectValue: number, comparableValue: number, payload: NumericPayload, higherIsBetter: boolean): number {
+  if (!payload.enabled) return 0;
+  const diff = comparableValue - subjectValue;
   const signedDiff = higherIsBetter ? diff : -diff;
-  return clamp(signedDiff * rule.percentPerUnit, rule.capPercent);
+  return clamp(signedDiff * payload.percentPerUnit, payload.capPercent);
 }
 
-function categoricalAdjustment(
-  subjectValue: string,
-  comparableValue: string,
-  rule: CategoricalRule
-): number {
-  if (!rule.enabled) return 0;
-  const subjectRank = rule.entries.find((e) => e.value === subjectValue)?.rank ?? 0;
-  const comparableRank = rule.entries.find((e) => e.value === comparableValue)?.rank ?? 0;
-  const rankDiff = comparableRank - subjectRank;
-  return clamp(rankDiff * rule.percentPerRankStep, rule.capPercent);
+function categoricalAdjustment(subjectValue: string, comparableValue: string, options: CategoryOption[], payload: MatrixPayload): number {
+  if (!payload.enabled) return 0;
+  const override = payload.cells?.find((c) => c.subject === subjectValue && c.comparable === comparableValue);
+  if (override) return override.percent;
+  const subjectRank = options.find((o) => o.value === subjectValue)?.rank ?? 0;
+  const comparableRank = options.find((o) => o.value === comparableValue)?.rank ?? 0;
+  return clamp((comparableRank - subjectRank) * payload.percentPerRankStep, payload.capPercent);
 }
 
-function buildLine(
-  key: string,
-  label: string,
-  ruleName: string,
-  percent: number,
-  reason: string,
-  calculation: string,
-  rules: CityRuleSet
-): AdjustmentLine | null {
+export function categoricalMatrix(options: CategoryOption[], payload: MatrixPayload): { subject: string; comparable: string; percent: number }[] {
+  const cells: { subject: string; comparable: string; percent: number }[] = [];
+  for (const s of options) {
+    for (const c of options) {
+      const override = payload.cells?.find((cell) => cell.subject === s.value && cell.comparable === c.value);
+      const percent = !payload.enabled ? 0 : override ? override.percent : clamp((c.rank - s.rank) * payload.percentPerRankStep, payload.capPercent);
+      cells.push({ subject: s.value, comparable: c.value, percent: Math.round(percent * 100) / 100 });
+    }
+  }
+  return cells;
+}
+
+function buildLine(category: LiveCategory, percent: number, reason: string, calculation: string): AdjustmentLine | null {
   if (Math.abs(percent) < 0.001) return null;
   return {
-    key,
-    label,
-    ruleName,
+    key: category.key,
+    label: category.label,
+    ruleName: `${category.label} — ${category.cityName ?? ""}`.trim(),
     percent: Math.round(percent * 100) / 100,
     reason,
     calculation,
-    city: rules.city,
-    version: rules.version,
-    effectiveDate: rules.effectiveDate,
-    configuredBy: rules.configuredBy,
-    ruleSource: `${rules.city} v${rules.version}`,
+    city: category.cityName,
+    version: category.version,
+    effectiveDate: category.effectiveDate,
+    configuredBy: category.configuredBy,
+    ruleSource: `${category.cityName} v${category.version}`,
   };
 }
 
@@ -87,211 +103,86 @@ function describeDirection(percent: number, subjectPhrase: string, comparablePhr
     : `Comparable ${comparablePhrase} — it is marked up before comparison.`;
 }
 
-export function calculateComparable(
-  subject: PropertyInput,
-  comparable: PropertyInput,
-  rules: CityRuleSet
-): ComparableResult {
+function computeCategoryLine(category: LiveCategory, subject: PropertyInput, comparable: PropertyInput): AdjustmentLine | null {
+  if (!category.isActive) return null;
+
+  if (category.kind === "numeric") {
+    const payload = category.payload as NumericPayload;
+    const higherIsBetter = category.higherIsBetter ?? true;
+    const subjectVal = numericValueFor(subject, category.key);
+    const comparableVal = numericValueFor(comparable, category.key);
+    const percent = numericAdjustment(subjectVal, comparableVal, payload, higherIsBetter);
+    if (percent === 0) return null;
+    return buildLine(
+      category,
+      percent,
+      `Subject ${category.label.toLowerCase()} ${subjectVal.toFixed(1)} vs comparable ${comparableVal.toFixed(1)}. ` +
+        describeDirection(percent, `is more favorable on ${category.label.toLowerCase()}`, `is more favorable on ${category.label.toLowerCase()}`),
+      `(${comparableVal.toFixed(1)} ${higherIsBetter ? "−" : "vs"} ${subjectVal.toFixed(1)}) × ${payload.percentPerUnit}%/unit${higherIsBetter ? "" : " × −1"} = ${percent.toFixed(2)}%`
+    );
+  }
+
+  if (category.kind === "flat") {
+    const payload = category.payload as FlatPayload;
+    if (!payload.enabled) return null;
+
+    if (category.valueType === "boolean") {
+      const subjectFlag = subject.attributes[category.key] === "true";
+      const comparableFlag = comparable.attributes[category.key] === "true";
+      if (subjectFlag === comparableFlag) return null;
+      const percent = comparableFlag ? -payload.percent : payload.percent;
+      return buildLine(
+        category,
+        percent,
+        comparableFlag
+          ? `Comparable is flagged for ${category.label.toLowerCase()} — marked down.`
+          : `Subject is flagged for ${category.label.toLowerCase()} — comparable marked down to match on a like-for-like basis.`,
+        `Flat penalty of ${payload.percent}% applied to the side flagged for ${category.label.toLowerCase()}.`
+      );
+    }
+
+    // count-based (parking, balcony, ...)
+    const subjectCount = parseFloat(subject.attributes[category.key] ?? "0") || 0;
+    const comparableCount = parseFloat(comparable.attributes[category.key] ?? "0") || 0;
+    const diff = comparableCount - subjectCount;
+    const percent = clamp(-diff * payload.percent, 100);
+    if (percent === 0) return null;
+    return buildLine(
+      category,
+      percent,
+      `Subject has ${subjectCount} ${category.label.toLowerCase()}, comparable has ${comparableCount}. ` +
+        describeDirection(percent, `has more ${category.label.toLowerCase()}`, `has more ${category.label.toLowerCase()}`),
+      `−(${comparableCount} − ${subjectCount}) × ${payload.percent}%/unit = ${percent.toFixed(2)}%`
+    );
+  }
+
+  // matrix
+  const payload = category.payload as MatrixPayload;
+  const subjectValue = subject.attributes[category.key] ?? "";
+  const comparableValue = comparable.attributes[category.key] ?? "";
+  const percent = categoricalAdjustment(subjectValue, comparableValue, category.options, payload);
+  if (percent === 0) return null;
+  const subjectLabel = category.options.find((o) => o.value === subjectValue)?.label ?? subjectValue;
+  const comparableLabel = category.options.find((o) => o.value === comparableValue)?.label ?? comparableValue;
+  return buildLine(
+    category,
+    percent,
+    `Subject is "${subjectLabel}", comparable is "${comparableLabel}". ` +
+      describeDirection(percent, `ranks higher on ${category.label.toLowerCase()}`, `ranks higher on ${category.label.toLowerCase()}`),
+    `rank step difference × ${payload.percentPerRankStep}%/step = ${percent.toFixed(2)}%`
+  );
+}
+
+export function calculateComparable(subject: PropertyInput, comparable: PropertyInput, ruleSet: LiveCityRuleSet): ComparableResult {
   const subjectLoadFactor = loadFactor(subject.superBuiltUpAreaSqft, subject.carpetAreaSqft);
   const comparableLoadFactor = loadFactor(comparable.superBuiltUpAreaSqft, comparable.carpetAreaSqft);
   const psf = comparable.salePrice ? comparable.salePrice / comparable.superBuiltUpAreaSqft : 0;
 
   const lines: AdjustmentLine[] = [];
 
-  // Load factor: LOWER load factor (less common-area loss) is better.
-  const lfPercent = numericAdjustment(subjectLoadFactor, comparableLoadFactor, rules.loadFactor, false);
-  const lfLine = buildLine(
-    "loadFactor",
-    "Load Factor",
-    `Load Factor Efficiency — ${rules.city}`,
-    lfPercent,
-    lfPercent !== 0
-      ? `Subject load factor ${subjectLoadFactor.toFixed(1)}% vs comparable ${comparableLoadFactor.toFixed(1)}%. ` +
-        describeDirection(lfPercent, "has a leaner load factor", "carries more efficient carpet area")
-      : "",
-    `(${comparableLoadFactor.toFixed(1)}% − ${subjectLoadFactor.toFixed(1)}%) × ${rules.loadFactor.percentPerUnit}%/pt × −1 = ${lfPercent.toFixed(2)}%`,
-    rules
-  );
-  if (lfLine) lines.push(lfLine);
-
-  // Age: NEWER is better (lower age).
-  const agePercent = numericAdjustment(subject.ageYears, comparable.ageYears, rules.age, false);
-  const ageLine = buildLine(
-    "age",
-    "Age of Property",
-    `Age Depreciation — ${rules.city}`,
-    agePercent,
-    agePercent !== 0
-      ? `Subject is ${subject.ageYears} yrs, comparable is ${comparable.ageYears} yrs. ` +
-        describeDirection(agePercent, "is newer", "is newer")
-      : "",
-    `(${comparable.ageYears} − ${subject.ageYears}) yrs × ${rules.age.percentPerUnit}%/yr × −1 = ${agePercent.toFixed(2)}%`,
-    rules
-  );
-  if (ageLine) lines.push(ageLine);
-
-  // Unit type
-  const unitPercent = categoricalAdjustment(subject.unitType, comparable.unitType, rules.unitType);
-  const unitLine = buildLine(
-    "unitType",
-    "Unit Type",
-    `Configuration Premium — ${rules.city}`,
-    unitPercent,
-    unitPercent !== 0
-      ? `Subject is ${subject.unitType.toUpperCase()}, comparable is ${comparable.unitType.toUpperCase()}. ` +
-        describeDirection(unitPercent, "is the larger configuration", "is the larger configuration")
-      : "",
-    `rank step difference × ${rules.unitType.percentPerRankStep}%/step = ${unitPercent.toFixed(2)}%`,
-    rules
-  );
-  if (unitLine) lines.push(unitLine);
-
-  // Construction status
-  const csPercent = categoricalAdjustment(
-    subject.constructionStatus,
-    comparable.constructionStatus,
-    rules.constructionStatus
-  );
-  const csLine = buildLine(
-    "constructionStatus",
-    "Construction Status",
-    `Construction Readiness — ${rules.city}`,
-    csPercent,
-    csPercent !== 0
-      ? `Subject is "${subject.constructionStatus}", comparable is "${comparable.constructionStatus}". ` +
-        describeDirection(csPercent, "is further along / more ready", "is further along / more ready")
-      : "",
-    `rank step difference × ${rules.constructionStatus.percentPerRankStep}%/step = ${csPercent.toFixed(2)}%`,
-    rules
-  );
-  if (csLine) lines.push(csLine);
-
-  // Condition
-  const condPercent = categoricalAdjustment(subject.condition, comparable.condition, rules.condition);
-  const condLine = buildLine(
-    "condition",
-    "Property Condition",
-    `Condition Grade — ${rules.city}`,
-    condPercent,
-    condPercent !== 0
-      ? `Subject condition "${subject.condition}" vs comparable "${comparable.condition}". ` +
-        describeDirection(condPercent, "is in better condition", "is in better condition")
-      : "",
-    `rank step difference × ${rules.condition.percentPerRankStep}%/step = ${condPercent.toFixed(2)}%`,
-    rules
-  );
-  if (condLine) lines.push(condLine);
-
-  // Furnishing
-  const furnPercent = categoricalAdjustment(subject.furnishing, comparable.furnishing, rules.furnishing);
-  const furnLine = buildLine(
-    "furnishing",
-    "Furnishing",
-    `Furnishing Level — ${rules.city}`,
-    furnPercent,
-    furnPercent !== 0
-      ? `Subject is "${subject.furnishing}", comparable is "${comparable.furnishing}". ` +
-        describeDirection(furnPercent, "is more furnished", "is more furnished")
-      : "",
-    `rank step difference × ${rules.furnishing.percentPerRankStep}%/step = ${furnPercent.toFixed(2)}%`,
-    rules
-  );
-  if (furnLine) lines.push(furnLine);
-
-  // Floor: higher floor generally preferred (as a fraction of total floors, so it's comparable across buildings)
-  const subjectFloorRatio = subject.totalFloors > 0 ? subject.floorNumber / subject.totalFloors : 0;
-  const comparableFloorRatio = comparable.totalFloors > 0 ? comparable.floorNumber / comparable.totalFloors : 0;
-  const floorPercent = numericAdjustment(
-    subjectFloorRatio * 100,
-    comparableFloorRatio * 100,
-    rules.floor,
-    true
-  );
-  const floorLine = buildLine(
-    "floor",
-    "Floor Number",
-    `Relative Floor Premium — ${rules.city}`,
-    floorPercent,
-    floorPercent !== 0
-      ? `Subject: floor ${subject.floorNumber}/${subject.totalFloors}. Comparable: floor ${comparable.floorNumber}/${comparable.totalFloors}. ` +
-        describeDirection(floorPercent, "sits on the higher relative floor", "sits on the higher relative floor")
-      : "",
-    `(${(comparableFloorRatio * 100).toFixed(0)} − ${(subjectFloorRatio * 100).toFixed(0)}) pts × ${rules.floor.percentPerUnit}%/pt = ${floorPercent.toFixed(2)}%`,
-    rules
-  );
-  if (floorLine) lines.push(floorLine);
-
-  // Facing
-  const facingPercent = categoricalAdjustment(subject.facing, comparable.facing, rules.facing);
-  const facingLine = buildLine(
-    "facing",
-    "Facing",
-    `Facing Preference — ${rules.city}`,
-    facingPercent,
-    facingPercent !== 0
-      ? `Subject faces ${subject.facing}, comparable faces ${comparable.facing}. ` +
-        describeDirection(facingPercent, "has the more preferred orientation", "has the more preferred orientation")
-      : "",
-    `rank step difference × ${rules.facing.percentPerRankStep}%/step = ${facingPercent.toFixed(2)}%`,
-    rules
-  );
-  if (facingLine) lines.push(facingLine);
-
-  // Parking
-  if (rules.parkingPerSlot.enabled) {
-    const parkingDiff = comparable.coveredParkingCount - subject.coveredParkingCount;
-    const parkingPercent = clamp(-parkingDiff * rules.parkingPerSlot.percent, 100);
-    const parkingLine = buildLine(
-      "parking",
-      "Parking",
-      `Covered Parking — ${rules.city}`,
-      parkingPercent,
-      parkingPercent !== 0
-        ? `Subject has ${subject.coveredParkingCount} covered slot(s), comparable has ${comparable.coveredParkingCount}. ` +
-          describeDirection(parkingPercent, "has more covered parking", "has more covered parking")
-        : "",
-      `−(${comparable.coveredParkingCount} − ${subject.coveredParkingCount}) slots × ${rules.parkingPerSlot.percent}%/slot = ${parkingPercent.toFixed(2)}%`,
-      rules
-    );
-    if (parkingLine) lines.push(parkingLine);
-  }
-
-  // Balcony
-  if (rules.balconyPerUnit.enabled) {
-    const balconyDiff = comparable.balconyCount - subject.balconyCount;
-    const balconyPercent = clamp(-balconyDiff * rules.balconyPerUnit.percent, 100);
-    const balconyLine = buildLine(
-      "balcony",
-      "Balcony",
-      `Balcony Count — ${rules.city}`,
-      balconyPercent,
-      balconyPercent !== 0
-        ? `Subject has ${subject.balconyCount} balcon(y/ies), comparable has ${comparable.balconyCount}. ` +
-          describeDirection(balconyPercent, "has more balconies", "has more balconies")
-        : "",
-      `−(${comparable.balconyCount} − ${subject.balconyCount}) × ${rules.balconyPerUnit.percent}%/balcony = ${balconyPercent.toFixed(2)}%`,
-      rules
-    );
-    if (balconyLine) lines.push(balconyLine);
-  }
-
-  // Legal issues — only the side that has issues is marked down.
-  if (rules.legalIssuesPenalty.enabled && subject.hasLegalIssues !== comparable.hasLegalIssues) {
-    const percent = comparable.hasLegalIssues
-      ? -rules.legalIssuesPenalty.percent
-      : rules.legalIssuesPenalty.percent;
-    const legalLine = buildLine(
-      "legalIssues",
-      "Legal Issues",
-      `Legal / Title Flag — ${rules.city}`,
-      percent,
-      comparable.hasLegalIssues
-        ? "Comparable carries a flagged legal/title issue — marked down."
-        : "Subject carries a flagged legal/title issue — comparable is marked down to match on a like-for-like basis.",
-      `Flat penalty of ${rules.legalIssuesPenalty.percent}% applied to the side with the flagged issue.`,
-      rules
-    );
-    if (legalLine) lines.push(legalLine);
+  for (const category of ruleSet.categories) {
+    const line = computeCategoryLine(category, subject, comparable);
+    if (line) lines.push(line);
   }
 
   // Unique features — each feature present on only one side contributes its own signed impact.
@@ -299,31 +190,37 @@ export function calculateComparable(
   const comparableFeatureIds = new Set(comparable.uniqueFeatures.map((f) => f.label.toLowerCase()));
 
   comparable.uniqueFeatures.forEach((f) => {
-    if (!subjectFeatureIds.has(f.label.toLowerCase())) {
-      const line = buildLine(
-        `feature-${f.id}`,
-        `Unique Feature: ${f.label}`,
-        `Unique Feature Premium — ${rules.city}`,
-        f.impactPercent,
-        `Comparable has "${f.label}" which subject does not — marked up to reflect it.`,
-        `Configured feature impact: ${f.impactPercent > 0 ? "+" : ""}${f.impactPercent}%`,
-        rules
-      );
-      if (line) lines.push(line);
+    if (!subjectFeatureIds.has(f.label.toLowerCase()) && Math.abs(f.impactPercent) > 0.001) {
+      lines.push({
+        key: `feature-${f.id}`,
+        label: `Unique Feature: ${f.label}`,
+        ruleName: "Unique Feature Premium",
+        percent: f.impactPercent,
+        reason: `Comparable has "${f.label}" which subject does not — marked up to reflect it.`,
+        calculation: `Configured feature impact: ${f.impactPercent > 0 ? "+" : ""}${f.impactPercent}%`,
+        city: ruleSet.cityName,
+        version: 1,
+        effectiveDate: "",
+        configuredBy: "Analyst (per-valuation)",
+        ruleSource: "Per-valuation feature",
+      });
     }
   });
   subject.uniqueFeatures.forEach((f) => {
-    if (!comparableFeatureIds.has(f.label.toLowerCase())) {
-      const line = buildLine(
-        `feature-subj-${f.id}`,
-        `Unique Feature: ${f.label} (subject only)`,
-        `Unique Feature Premium — ${rules.city}`,
-        -f.impactPercent,
-        `Subject has "${f.label}" which comparable does not — comparable marked down to match.`,
-        `Configured feature impact: −${f.impactPercent}%`,
-        rules
-      );
-      if (line) lines.push(line);
+    if (!comparableFeatureIds.has(f.label.toLowerCase()) && Math.abs(f.impactPercent) > 0.001) {
+      lines.push({
+        key: `feature-subj-${f.id}`,
+        label: `Unique Feature: ${f.label} (subject only)`,
+        ruleName: "Unique Feature Premium",
+        percent: -f.impactPercent,
+        reason: `Subject has "${f.label}" which comparable does not — comparable marked down to match.`,
+        calculation: `Configured feature impact: −${f.impactPercent}%`,
+        city: ruleSet.cityName,
+        version: 1,
+        effectiveDate: "",
+        configuredBy: "Analyst (per-valuation)",
+        ruleSource: "Per-valuation feature",
+      });
     }
   });
 
@@ -340,45 +237,22 @@ export function calculateComparable(
   };
 }
 
-export function categoricalMatrix(rule: CategoricalRule): { subject: string; comparable: string; percent: number }[] {
-  const cells: { subject: string; comparable: string; percent: number }[] = [];
-  for (const s of rule.entries) {
-    for (const c of rule.entries) {
-      const percent = rule.enabled ? clamp((c.rank - s.rank) * rule.percentPerRankStep, rule.capPercent) : 0;
-      cells.push({ subject: s.value, comparable: c.value, percent: Math.round(percent * 100) / 100 });
-    }
-  }
-  return cells;
-}
-
-export function calculateValuation(
-  subject: PropertyInput,
-  comparables: PropertyInput[],
-  rules: CityRuleSet
-): ValuationResult {
+export function calculateValuation(subject: PropertyInput, comparables: PropertyInput[], ruleSet: LiveCityRuleSet): ValuationResult {
   const subjectLoadFactor = loadFactor(subject.superBuiltUpAreaSqft, subject.carpetAreaSqft);
-  const results = comparables.map((c) => calculateComparable(subject, c, rules));
+  const results = comparables.map((c) => calculateComparable(subject, c, ruleSet));
 
   const validPsfs = results.map((r) => r.adjustedPsf).filter((v) => v > 0);
-  const averageAdjustedPsf = validPsfs.length
-    ? Math.round(validPsfs.reduce((a, b) => a + b, 0) / validPsfs.length)
-    : 0;
+  const averageAdjustedPsf = validPsfs.length ? Math.round(validPsfs.reduce((a, b) => a + b, 0) / validPsfs.length) : 0;
 
   const finalMarketValue = Math.round(averageAdjustedPsf * subject.superBuiltUpAreaSqft);
 
-  // Spread across comparables drives confidence: tight cluster of adjusted PSFs -> high confidence.
   const mean = averageAdjustedPsf || 1;
-  const variance = validPsfs.length
-    ? validPsfs.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / validPsfs.length
-    : 0;
+  const variance = validPsfs.length ? validPsfs.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / validPsfs.length : 0;
   const stdDev = Math.sqrt(variance);
   const coefficientOfVariation = mean ? stdDev / mean : 1;
 
   const confidenceScore = Math.max(35, Math.min(98, Math.round(98 - coefficientOfVariation * 250)));
-  const reliabilityScore = Math.max(
-    30,
-    Math.min(95, Math.round(60 + validPsfs.length * 6 - coefficientOfVariation * 200))
-  );
+  const reliabilityScore = Math.max(30, Math.min(95, Math.round(60 + validPsfs.length * 6 - coefficientOfVariation * 200)));
 
   const spread = mean * (coefficientOfVariation + 0.03);
   const rangeLow = Math.round((averageAdjustedPsf - spread) * subject.superBuiltUpAreaSqft);

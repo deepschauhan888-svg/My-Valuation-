@@ -58,11 +58,11 @@ export default function ValuationReport({ result, onClose }: { result: Valuation
             <Row label="Super Built-up Area" value={`${result.subject.superBuiltUpAreaSqft.toLocaleString("en-IN")} sqft`} />
             <Row label="Carpet Area" value={`${result.subject.carpetAreaSqft.toLocaleString("en-IN")} sqft`} />
             <Row label="Load Factor" value={`${result.subjectDerived.loadFactorPercent.toFixed(1)}%`} />
-            <Row label="Unit Type" value={result.subject.unitType.toUpperCase()} />
-            <Row label="Age" value={`${result.subject.ageYears} yrs`} />
-            <Row label="Condition" value={result.subject.condition.replace("-", " ")} />
+            {result.subject.attributes.unitType && <Row label="Unit Type" value={result.subject.attributes.unitType.toUpperCase()} />}
+            {result.subject.attributes.age && <Row label="Age" value={`${result.subject.attributes.age} yrs`} />}
+            {result.subject.attributes.condition && <Row label="Condition" value={result.subject.attributes.condition.replace("-", " ")} />}
             <Row label="Floor" value={`${result.subject.floorNumber} / ${result.subject.totalFloors}`} />
-            <Row label="Facing" value={result.subject.facing.replace("-", " ")} />
+            {result.subject.attributes.facing && <Row label="Facing" value={result.subject.attributes.facing.replace("-", " ")} />}
           </dl>
         </div>
 

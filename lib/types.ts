@@ -1,12 +1,17 @@
 // Core domain types for the Transparent Valuation Engine.
-// Nothing in this file adjusts for size — size only feeds PSF and load factor math,
-// per the product's explainability rules.
-
-export type ConstructionStatus = "ready-to-move" | "under-construction" | "new-launch";
-export type PropertyCondition = "excellent" | "good" | "average" | "needs-repair";
-export type Furnishing = "unfurnished" | "semi-furnished" | "fully-furnished";
-export type Facing = "north" | "east" | "north-east" | "west" | "south" | "south-west" | "other";
-export type UnitType = "1bhk" | "2bhk" | "3bhk" | "4bhk" | "villa" | "studio";
+//
+// Everything that used to be a fixed TypeScript field for a "rule" — age,
+// facing, condition, furnishing, unit type, construction status, parking,
+// balcony, legal issues — now lives in `attributes`, keyed by the rule
+// category's `key` column in Supabase. This is what makes it possible for
+// an admin to add a brand new category from the Rule Engine and have it
+// participate in valuations without a code change.
+//
+// Two things stay structural (not admin-editable categories), because
+// they're derivations the product's methodology treats as fixed math, not
+// configurable rules: Load Factor (derived from area/carpet area) and the
+// Floor adjustment's ratio (derived from floor number/total floors). Area
+// itself is still never adjusted directly — see lib/valuation-engine.ts.
 
 export interface UniqueFeature {
   id: string;
@@ -19,21 +24,14 @@ export interface PropertyInput {
   id: string;
   label: string; // "Subject Property" or "Comparable 1"
   society: string;
-  city: string;
+  city: string; // city slug
   superBuiltUpAreaSqft: number;
   carpetAreaSqft: number;
-  ageYears: number;
-  unitType: UnitType;
-  constructionStatus: ConstructionStatus;
-  condition: PropertyCondition;
-  furnishing: Furnishing;
   floorNumber: number;
   totalFloors: number;
-  facing: Facing;
-  coveredParkingCount: number;
-  balconyCount: number;
-  hasLegalIssues: boolean;
   uniqueFeatures: UniqueFeature[];
+  /** every other rule category's raw value, keyed by RuleCategory.key */
+  attributes: Record<string, string>;
   /** only present on comparables — the transacted / asking price */
   salePrice?: number;
 }
@@ -86,47 +84,61 @@ export interface ValuationResult {
   reliabilityScore: number; // 0-100, based on spread across comparables
 }
 
-// ---- Admin-configurable rule set ----
+// ---- Live rule categories, assembled from Supabase (see lib/supabase/queries.ts) ----
 
-export interface NumericRule {
-  /** percentage adjustment applied per unit of difference (e.g. per year of age, per % load factor) */
+export type RuleKind = "numeric" | "flat" | "matrix";
+
+export interface CategoryOption {
+  value: string;
+  label: string;
+  rank: number;
+}
+
+export interface NumericPayload {
   percentPerUnit: number;
   capPercent: number;
   enabled: boolean;
 }
 
-export interface CategoricalRuleEntry {
-  value: string;
-  rank: number; // higher rank = more desirable
-}
-
-export interface CategoricalRule {
-  entries: CategoricalRuleEntry[];
-  percentPerRankStep: number;
-  capPercent: number;
-  enabled: boolean;
-}
-
-export interface FlatRule {
+export interface FlatPayload {
   percent: number;
   enabled: boolean;
 }
 
-export interface CityRuleSet {
-  city: string;
-  effectiveDate: string;
+export interface MatrixPayload {
+  percentPerRankStep: number;
+  capPercent: number;
+  enabled: boolean;
+  /** Explicit per-pair overrides. When present for a (subject, comparable)
+   *  pair, this value wins over the rank-derived calculation — this is
+   *  what makes every matrix cell independently editable. */
+  cells?: { subject: string; comparable: string; percent: number }[];
+}
+
+/** One row from rule_categories, joined with its live (draft or published) payload. */
+export interface LiveCategory {
+  id: string;
+  cityId: string;
+  cityName: string;
+  kind: RuleKind;
+  key: string;
+  label: string;
+  description: string | null;
+  comparisonRule: string | null;
+  example: string | null;
+  higherIsBetter: boolean | null; // numeric only
+  valueType: "count" | "boolean" | null; // flat only
+  isActive: boolean;
+  sortOrder: number;
+  options: CategoryOption[]; // matrix only
+  payload: NumericPayload | FlatPayload | MatrixPayload;
   version: number;
-  notes: string;
+  effectiveDate: string;
   configuredBy: string;
-  loadFactor: NumericRule;
-  age: NumericRule;
-  unitType: CategoricalRule;
-  constructionStatus: CategoricalRule;
-  condition: CategoricalRule;
-  furnishing: CategoricalRule;
-  floor: NumericRule;
-  facing: CategoricalRule;
-  parkingPerSlot: FlatRule;
-  balconyPerUnit: FlatRule;
-  legalIssuesPenalty: FlatRule;
+}
+
+export interface LiveCityRuleSet {
+  city: string; // slug
+  cityName: string;
+  categories: LiveCategory[];
 }

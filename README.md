@@ -1,134 +1,55 @@
 # ValueTrace — Transparent Property Valuation Engine
 
 A comparable-sales property valuation platform where every premium and
-discount is shown with its reason, its math, and the rule that produced it.
+discount is shown with its reason, its math, and the rule that produced it —
+and where every one of those rules is configured live in Supabase by an
+authenticated admin, not hardcoded in the app.
 
-## What's built (real, working code)
+**This is a real backend now, not a demo.** Nothing will work — not the
+public valuation tool, not the admin dashboard — until you connect a
+Supabase project and run the migration + seed below. That's expected; there
+was no way to provision or seed a live database from inside this build
+environment, so this README is the last step.
 
-- **Marketing site** (`app/page.tsx`) — hero with a live animated "audit
-  trail" (the product's signature visual), a 6-step how-it-works timeline,
-  a traditional-vs-ValueTrace comparison, and a methodology section walking
-  through the Comparable Sales flow and the 14 comparison factors.
-- **Valuation flow** (`app/valuation/page.tsx`) — enter a subject property,
-  add any number of comparables, and run the engine. Results show the
-  final value, range, confidence/reliability scores, and a fully
-  expandable, comparable-by-comparable adjustment breakdown.
-- **Valuation engine** (`lib/valuation-engine.ts`) — the actual math:
-  - Size (super built-up / carpet area) is *never* adjusted directly — it
-    only feeds PSF and load-factor calculations, per spec.
-  - Every other factor (load factor, age, unit type, construction status,
-    condition, furnishing, floor, facing, parking, balcony, legal issues,
-    unique features) produces a signed adjustment with a human-readable
-    reason.
-  - Adjustment direction follows the stated philosophy exactly: if the
-    subject is superior on a factor, the comparable gets a **negative**
-    adjustment; if the comparable is superior, it gets a **positive** one.
-  - `Adjusted PSF = Comparable PSF − (Comparable PSF × Total Adjustment)`
-- **Admin rule engine** (`app/admin/page.tsx`) — City → Category →
-  Comparison Matrix structure: numeric rules, a pairwise comparison matrix
-  for every categorical factor (Facing, Condition, Furnishing, Unit Type,
-  Construction Status), flat rules, a version-history log with a "publish
-  new version" action, and a sample analytics chart. Runs on local React
-  state today (see "Not yet wired" below).
-- **Trust metrics** (`components/TrustMetrics.tsx`) — animated counters
-  (100% transparent, 14 factors, 0 hidden adjustments, 100% explainable)
-  right below the hero.
-- **Live demo preview** (`components/LiveDemoPreview.tsx`) — a miniature,
-  self-running valuation shown before the "Start Valuation" CTA so users
-  understand the workflow before entering a single number.
-- **Clickable methodology** (`components/MethodologySection.tsx` +
-  `components/FactorDetailModal.tsx`) — every one of the 14 factor chips
-  opens a modal with its definition, comparison rule, adjustment logic,
-  and a worked example (`lib/factor-details.ts`).
-- **Full adjustment audit trail** — every adjustment line now carries a
-  rule name, the exact calculation, city, rule version, effective date,
-  and who configured it (`AdjustmentLine` in `lib/types.ts`), all shown
-  when an adjustment row is expanded.
-- **Comparable Quality Score** (`lib/quality-score.ts`) — a star rating
-  and percentage per comparable, built from concrete, visible checks
-  (same society, same city, similar configuration/age/area, no legal
-  flags, similar furnishing) — not a hidden model.
-- **Ask about this valuation** (`components/AskAiPanel.tsx`) — a
-  deterministic, rule-based explainer that answers questions about any
-  factor using that valuation's own adjustment data. It does not call an
-  external LLM; see "Not yet wired" for how to upgrade it to one.
-- **Valuation Playground** (`app/playground/page.tsx`) — sliders for
-  parking, floor, age, and facing that recompute the adjusted PSF live
-  against a fixed baseline subject, using the same engine as the main flow.
-- **Downloadable valuation report** (`components/ValuationReport.tsx`) —
-  a print-optimized, multi-section report (cover, executive summary,
-  subject, comparables & adjustment sheet, final valuation, methodology,
-  assumptions, limitations) exportable to PDF via the browser's print
-  dialog — no PDF library dependency required.
-- Dark/light mode with no flash-of-wrong-theme (a tiny inline script sets
-  the class before paint), fully responsive, keyboard-focusable controls,
-  and `prefers-reduced-motion` respected.
-- **Cinematic pass** — the hero's live valuation unfolds with a
-  blur-to-clear reveal and fades slightly on scroll for a subtle parallax
-  exit; section headings fade in on view; nav and footer links use a
-  quiet underline-on-hover instead of a color swap; a minimal loading
-  screen (logo + one line) shows once per session, skipped instantly
-  under reduced motion; and a subtle custom cursor (a small dot with a
-  lagging ring that expands over interactive elements) runs on desktop
-  pointers only — absent on touch devices and under reduced motion.
-- **Restraint pass** — gold shifted from a bright accent to a muted brass
-  (`#9C7A45`), premium/discount tones softened to match; card shadows
-  reduced to a near-invisible hairline so surfaces read as paper rather
-  than software; hover lifts use a slow custom easing curve instead of a
-  shadow bloom; all buttons dropped scale-based tap/hover motion in favor
-  of a 1px vertical nudge; every Lucide icon now shares a single
-  `strokeWidth={1.5}`; body copy is capped to a 62-character measure
-  (`.measure` utility) for calmer reading; "How It Works" became a quiet
-  numbered list (large brass numerals, no icons, no boxes) instead of a
-  3-card grid; "Why We're Different" dropped its two bordered boxes for a
-  single divided two-column list; the methodology's "principles" block
-  lost its card background in favor of a plain rule-divided list; and the
-  hero now opens with a beat of anticipation before its first line
-  appears, then unfolds roughly every two seconds.
-- **Hero-only rewrite** (`components/AuditTrailHero.tsx`) — headline and
-  subtext rewritten to withhold explanation rather than lead with it
-  ("The number isn't enough. Every rupee should have a reason."); the
-  valuation card restyled as a document ("Valuation Worksheet," a
-  reference number, a date) rather than a dashboard; the card tilts a
-  couple of degrees toward the cursor (spring-smoothed, capped at 2.5°);
-  the secondary CTA dropped its pill/border for a plain underlined link;
-  a four-item trust strip (✓ Comparable Sales Method / Fully Transparent
-  / City-specific Adjustments / Every Premium Explained) replaced the old
-  two-item checklist; a very quiet dual radial-gradient sits behind the
-  hero only, contained to that section; and the reveal sequence now runs
-  Comparable → Load Factor → Age → Parking → Floor → Adjusted PSF → Final
-  Value over roughly 6–8 seconds before a long hold and loop. No other
-  section was touched in this pass.
-- **Motion & interaction pass** (no layout, copy, or section changes) —
-  `components/AmbientBackground.tsx` adds a barely-there grain texture
-  and two slow-floating soft lights behind the whole site;
-  `components/SpotlightCard.tsx` and the `.spotlight-card` CSS utility
-  give a cursor-following light + brightening border to the hero card,
-  `ResultSummary`, `ComparableResultCard`, the Playground's result
-  cards, and every admin tab panel; `components/AnimatedNumber.tsx`
-  smoothly tweens numbers instead of snapping them (final value,
-  average PSF, comparable scores, playground PSF, matrix cell percents);
-  a `.tap-feedback` utility gives every button a tiny, fast press
-  compression; `app/template.tsx` fades internal navigation instead of
-  flashing; admin tab switches now cross-fade via `AnimatePresence`
-  instead of swapping instantly; and How It Works / Why We're Different
-  / Methodology each got their own reveal language (blur-in stagger,
-  independently-staggered lists, and a clip-reveal headline
-  respectively) instead of one repeated animation.
+## 1. Create a Supabase project
 
-## Design system
+1. Create a project at [supabase.com](https://supabase.com).
+2. In **Project Settings → API**, copy the **Project URL** and **anon
+   public** key.
+3. Copy `.env.example` to `.env.local` and paste them in:
 
-- Colors: warm paper/near-black bases, muted **gold** for final values,
-  **premium green** for positive adjustments, **discount red** for
-  negative ones — adjustments read like a real ledger, not a generic SaaS
-  gradient.
-- Type: Sora (display), Inter (body), JetBrains Mono (every number —
-  PSF, percentages, scores — so figures read as precise and auditable).
-- Signature element: the animated audit-trail ledger in the hero and the
-  expandable adjustment rows throughout — the product's whole pitch is
-  "show your work," so the UI is built around that verbatim.
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+   ```
 
-## Getting it running
+## 2. Run the schema and seed data
+
+In the Supabase dashboard's **SQL Editor**, run these two files in order:
+
+1. `supabase/migrations/0001_init.sql` — creates every table (cities, rule
+   categories, category options, drafts, published snapshots, the audit
+   log, valuations, profiles) and every Row Level Security policy.
+2. `supabase/seed.sql` — creates the five cities (Mumbai, Bengaluru, Delhi
+   NCR, Pune, Hyderabad) and their default rule categories, each with an
+   initial published v1, so the site has live rules immediately.
+
+## 3. Create your first admin
+
+There's no public sign-up page — that's intentional; only people you
+create in Supabase can reach `/admin`. In the dashboard's
+**Authentication → Users**, click **Add user**, set an email + password.
+A database trigger (`handle_new_user`, in the migration) automatically
+creates a matching `profiles` row with `role = 'admin'`.
+
+> **Before you open this up to a public sign-up flow**, tighten
+> `handle_new_user()` — right now it grants `admin` to every new auth user,
+> which is fine when only you create accounts from the dashboard, but wrong
+> the moment signup is self-serve. See "Security notes" below.
+
+Sign in at `/login` with that email + password.
+
+## 4. Run it
 
 ```bash
 npm install
@@ -136,74 +57,142 @@ npm run dev
 ```
 
 Requires outbound access to Google Fonts at build time (works out of the
-box on Vercel). If you build somewhere without internet access, swap the
-`next/font/google` imports in `app/layout.tsx` for local fonts or system
-stacks.
+box on Vercel; add the same two env vars there under **Project Settings →
+Environment Variables**).
 
-## Deploying
+## Architecture
 
-1. Push this repo to GitHub.
-2. Import it in Vercel — no special build settings needed, it's a
-   standard Next.js 14 App Router project.
-3. Add environment variables for Supabase once you wire it in (below).
+### Nothing is hardcoded
 
-## Not yet wired — what a next pass should add
+Every adjustment factor — Load Factor, Age, Floor, Parking, Balcony, Legal
+Issues, Unit Type, Construction Status, Condition, Furnishing, Facing, and
+anything an admin adds later — is a row in `rule_categories`, not a field
+in a TypeScript type. `lib/valuation-engine.ts` doesn't know the names of
+any of these; it loops over whatever active categories a city has and
+applies numeric, flat, or matrix logic generically based on `kind`. Two
+things stay structural, per the product's own methodology, not because
+they were simplified: Load Factor is derived from area/carpet area, and
+the Floor adjustment's ratio is derived from floor number/total floors —
+area itself is never adjusted directly, on the site or in the database.
 
-This is a strong, working front end and a real (not mocked) calculation
-engine. The parts that need a backend are intentionally scaffolded
-rather than faked, so nothing here pretends to be production-secure when
-it isn't:
+Adding a genuinely new comparison factor — "Distance to Metro," "View
+Quality," anything — requires zero code changes: create it from
+**Admin → Rule Engine → + Add Category**, and it appears in the public
+valuation form, the methodology page, and the calculation itself
+automatically, because all three read the same live `rule_categories`
+table.
 
-- **Supabase auth for `/admin`** — the admin route has no login gate
-  yet. Add `@supabase/ssr`, a `middleware.ts` that checks session on
-  `/admin/*`, and a `profiles` table with a `role` column.
-- **Persisting rule sets** — `lib/rules-data.ts` is an in-memory seed.
-  Move `CityRuleSet` rows into a Supabase table (one row per city +
-  version, matching the shape in `lib/types.ts`) and replace
-  `getRuleSetForCity` with a query. Keep the version/effective-date
-  columns — the UI already displays them for auditability.
-  Rules take exactly this shape:
+### Draft → Publish, for real
 
-  ```sql
-  create table city_rule_sets (
-    id uuid primary key default gen_random_uuid(),
-    city text not null,
-    version int not null,
-    effective_date date not null,
-    notes text,
-    rules jsonb not null, -- the NumericRule/CategoricalRule/FlatRule blocks
-    created_at timestamptz default now()
-  );
-  ```
+Editing a rule in `/admin/rule-engine` writes to `rule_drafts` only. The
+public site — the valuation tool, the methodology page — reads exclusively
+from `rule_published`, the append-only table of version snapshots. Nothing
+an admin edits affects a live valuation until they click **Publish**, which
+copies the current draft into a new `rule_published` row stamped with the
+next version number. This is enforced by Row Level Security, not just the
+UI: `rule_drafts` has no public SELECT policy at all — a public user
+literally cannot query draft rules, even by guessing an API shape.
 
-- **Persisting valuations + analytics** — every completed valuation
-  (`ValuationResult`) should be written to a `valuations` table so the
-  admin analytics panel (today's valuations, top cities, most-compared
-  societies, CSV export) can query real data instead of the sample
-  chart currently in `app/admin/page.tsx`.
-- **Comparable lookup** — right now users type comparables in by hand.
-  A real MVP win is autocompleting `society` against a societies table
-  so PSF history can be pre-filled.
-- **A real LLM behind "Ask about this valuation"** — today's
-  `AskAiPanel` is deliberately rule-based (matches the question to a
-  factor and returns that factor's own reason/calculation) so it works
-  with zero configuration and never invents an explanation. To upgrade
-  it: add a server route that calls the Anthropic API with the
-  valuation's adjustment lines as context and the user's question as the
-  prompt, and swap `answerFor()` for a fetch to that route. Keep an
-  API key server-side only — never in client code.
+### Every save is audited
 
-## File map
+`rule_change_log` gets a row for every draft save, every publish, every
+city created/renamed/deleted, and every category created — with the
+previous value, the new value, who made the change, and the reason they
+typed in. `/admin/versions` reads this table directly.
+
+### Authentication
+
+- `middleware.ts` refreshes the Supabase session on every request and
+  redirects unauthenticated visitors away from `/admin/*` to `/login`.
+- `app/admin/layout.tsx` then does a second, stronger check: it looks up
+  the signed-in user's `profiles.role` and shows an "access restricted"
+  screen if they're authenticated but not an admin. This matters because
+  middleware only proves *someone* is logged in, not that they're
+  authorized.
+- Underneath both of those, RLS is the actual security boundary — the
+  `is_admin()` Postgres function gates every write policy, so even a
+  request that somehow bypassed the Next.js layers would still be
+  rejected by Postgres itself.
+
+### Public API surface
+
+The public site never runs the valuation engine against untrusted,
+client-suppliable rules — it calls two server-side endpoints:
+
+- `GET /api/categories?city=<slug>` — the published, active rule
+  categories for a city (also used with no `city` param to list active
+  cities). Powers the dynamic valuation form and the homepage methodology
+  section.
+- `POST /api/valuate` — takes a subject + comparables + city, fetches that
+  city's published rules server-side, runs `calculateValuation`, logs the
+  result to `valuations` for analytics, and returns it. This is the only
+  place `calculateValuation` runs for a request that matters.
+
+The Playground fetches the published rule set once on load and holds it
+in memory for instant slider response — still 100% database-sourced, just
+cached client-side rather than re-fetched per pixel of drag.
+
+## Security notes — read before going to production
+
+- **`handle_new_user()` grants `admin` to every new signup.** Fine for a
+  single-operator setup where you create accounts by hand in the Supabase
+  dashboard. Before adding any self-serve signup flow, change the
+  trigger's default role (or remove the trigger and provision `profiles`
+  rows by hand/via an invite flow instead).
+- **The "Users" page is a placeholder**, per your spec's own "(future)"
+  label — there's no invite flow or per-city permission model yet. Every
+  admin today can edit every city.
+- **RLS is the real boundary, not the UI.** If you add new tables or
+  columns, give them explicit policies — Supabase defaults to blocking all
+  access until you do, so a forgotten policy fails safe, but it's worth
+  double-checking after any schema change.
+
+## What's still a deliberate placeholder
+
+- **Users (future)** — exactly as specced, a "coming soon" page. No
+  multi-admin invite flow, roles are binary (admin/analyst) and only
+  settable directly in the `profiles` table today.
+- **Analytics** is real (it queries the `valuations` table live) but
+  simple — a per-city count. No time-series, no most-compared-society
+  breakdown yet; the table has everything needed to build those next.
+
+## File map (additions this pass)
 
 ```
-app/
-  page.tsx            landing page
-  valuation/page.tsx   the calculator flow
-  admin/page.tsx       rule engine + analytics scaffold
-components/            all UI pieces, one responsibility each
-lib/
-  types.ts             domain types — start here to understand the model
-  valuation-engine.ts  the adjustment math + reasons
-  rules-data.ts        seed per-city rule sets (→ move to Supabase)
-  format.ts            ₹ crore/lakh formatting
+supabase/
+  migrations/0001_init.sql   full schema + RLS
+  seed.sql                    default cities + categories + v1 published rules
+middleware.ts                  session refresh + /admin route protection
+lib/supabase/
+  client.ts                    browser Supabase client
+  server.ts                    server Supabase client (Server Components/Actions/Routes)
+  queries.ts                   every data-access function — start here
+  actions.ts                   "use server" mutations called from admin UI
+lib/valuation-engine.ts         now generic — loops over LiveCategory[], no named factors
+lib/types.ts                    PropertyInput.attributes replaces named fields
+app/login/page.tsx              admin sign-in
+app/admin/
+  layout.tsx                    auth + role gate, renders the sidebar
+  page.tsx                      dashboard overview
+  cities/                       city CRUD
+  rule-engine/                  category list, add-category, per-category editor
+  versions/                     audit log viewer
+  analytics/                    live valuation counts by city
+  users/, settings/             placeholder + account info
+app/api/
+  categories/route.ts           public: published categories for a city
+  valuate/route.ts               public: run a valuation server-side
 ```
+
+---
+
+## Design system (from earlier passes — unchanged this round)
+
+Colors: warm brass gold (`#9C7A45`), muted premium green / discount red,
+near-invisible card shadows so surfaces read as paper. Type: Sora
+(display), Inter (body), JetBrains Mono (every number). A custom cursor,
+ambient background grain, and cursor-following card spotlights run
+site-wide; every button has tiny press feedback; numbers tween instead of
+snapping. The hero's live valuation unfolds over ~6–8 seconds with a beat
+of anticipation before the first line. None of this changed in this pass
+— this round was architecture only, exactly as asked.

@@ -2,7 +2,15 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import { FactorDetail } from "@/lib/factor-details";
+
+export interface FactorDetail {
+  key: string;
+  definition: string;
+  comparisonRule: string;
+  adjustmentLogic: string;
+  example: string;
+  adjustable: boolean;
+}
 
 export default function FactorDetailModal({
   detail,
